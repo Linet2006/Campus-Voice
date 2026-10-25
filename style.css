@@ -71,6 +71,13 @@
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
+/* Password Toggle Icon Button */
+.password-toggle {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s ease;
+}
+
 /* Toast Animation */
 #toast {
     animation: toastIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -90,6 +97,10 @@
 /* File Viewer Modal Elements */
 #fileViewerModal {
     animation: viewerFadeIn 0.2s ease-out;
+}
+
+#fileViewerBody {
+    scroll-behavior: auto;
 }
 
 @keyframes viewerFadeIn {
@@ -129,12 +140,13 @@ body.role-faculty .faculty-only {
     display: block !important;
 }
 
-body.role-faculty button.faculty-only {
-    display: inline-flex !important;
+body.role-faculty .faculty-only.flex,
+body.role-faculty div.faculty-only.flex {
+    display: flex !important;
 }
 
-body.role-faculty div.faculty-only.flex-container {
-    display: flex !important;
+body.role-faculty button.faculty-only {
+    display: inline-flex !important;
 }
 
 body.role-faculty span.faculty-only {
@@ -149,6 +161,11 @@ body.role-student .student-only {
     display: block !important;
 }
 
+body.role-student .student-only.flex,
+body.role-student div.student-only.flex {
+    display: flex !important;
+}
+
 body.role-student button.student-only,
 body.role-student .student-only.filter-pill {
     display: inline-flex !important;
@@ -156,4 +173,20 @@ body.role-student .student-only.filter-pill {
 
 body.role-student span.student-only {
     display: inline-flex !important;
+}
+
+/* Smooth custom scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }

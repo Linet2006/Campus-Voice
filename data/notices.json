@@ -1,0 +1,127 @@
+[
+  {
+    "id": 1792946905991,
+    "title": "Gathering Info",
+    "category": "Sports",
+    "description": "EveryOne Gather in the Stadium",
+    "author": "Dr. Ramesh (CSE Dept)",
+    "postedBy": "Dr. Ramesh (CSE Dept)",
+    "authorRole": "faculty",
+    "date": "Oct 25, 2026",
+    "upvotes": 0,
+    "audience": {
+      "type": "all",
+      "branches": []
+    },
+    "attachment": null
+  },
+  {
+    "id": 1792944700907,
+    "title": "Notes",
+    "category": "Exams",
+    "description": "important notes",
+    "author": "Dr. Ramesh (CSE Dept)",
+    "postedBy": "Dr. Ramesh (CSE Dept)",
+    "authorRole": "faculty",
+    "date": "Oct 25, 2026",
+    "upvotes": 0,
+    "audience": {
+      "type": "branches",
+      "branches": [
+        "AIML"
+      ]
+    },
+    "attachment": {
+      "id": "file_1792944697936_3p3x5js",
+      "name": "AHLYA TECHNOLOGIES-Bootcamp-Day1.pdf",
+      "type": "application/pdf",
+      "size": 215888
+    }
+  },
+  {
+    "id": 5,
+    "title": "CAD/CAM & Structural Analysis Hands-on Workshop",
+    "category": "Exams",
+    "description": "Hands-on technical workshop for mechanical and civil engineering students on finite element modeling and sustainable design.",
+    "author": "Department of Mechanical & Civil",
+    "postedBy": "Dr. Ramesh (CSE Dept)",
+    "authorRole": "faculty",
+    "date": "Oct 12, 2026",
+    "upvotes": 42,
+    "attachment": null,
+    "audience": {
+      "type": "branches",
+      "branches": [
+        "ME",
+        "CV"
+      ]
+    }
+  },
+  {
+    "id": 4,
+    "title": "Ahlya Technologies On-Campus Placement Drive",
+    "category": "Placements",
+    "description": "Ahlya Technologies is conducting an on-campus evaluation for final year students. Register through the placement portal.",
+    "author": "GEC Training & Placement Cell",
+    "postedBy": null,
+    "authorRole": "faculty",
+    "date": "Sep 28, 2026",
+    "upvotes": 64,
+    "attachment": null,
+    "audience": {
+      "type": "all",
+      "branches": []
+    }
+  },
+  {
+    "id": 3,
+    "title": "CSE & AIML Laboratory Practical Examination Timetable",
+    "category": "Exams",
+    "description": "The practical examination timetable and laboratory batch details have been released for Computer Science and AI & ML students.",
+    "author": "Department of Computer Science & AIML",
+    "postedBy": null,
+    "authorRole": "faculty",
+    "date": "Oct 8, 2026",
+    "upvotes": 31,
+    "attachment": null,
+    "audience": {
+      "type": "branches",
+      "branches": [
+        "CSE",
+        "AIML"
+      ]
+    }
+  },
+  {
+    "id": 2,
+    "title": "Web Innovation Prototype Challenge",
+    "category": "Hackathons",
+    "description": "Student squads can register for the 24-hour web prototype innovation challenge. Exciting prizes and mentorship opportunities.",
+    "author": "Student Innovation Club",
+    "postedBy": null,
+    "authorRole": "faculty",
+    "date": "Sep 26, 2026",
+    "upvotes": 49,
+    "attachment": null,
+    "audience": {
+      "type": "all",
+      "branches": []
+    }
+  },
+  {
+    "id": 1,
+    "title": "Annual Cultural Fest 2026",
+    "category": "Cultural",
+    "description": "Registrations are officially open for music, dance, theatrical, and fine arts events. Contact student coordinators for slots.",
+    "author": "Student Welfare Committee",
+    "postedBy": null,
+    "authorRole": "faculty",
+    "date": "Sep 25, 2026",
+    "upvotes": 18,
+    "attachment": null,
+    "audience": {
+      "type": "all",
+      "branches": []
+    }
+  }
+]

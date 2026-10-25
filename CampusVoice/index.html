@@ -42,87 +42,323 @@
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans antialiased">
 
     <!-- ===================================== -->
-    <!-- 1. ROLE SELECTION SCREEN (OVERLAY)   -->
+    <!-- 1. ROLE / AUTH SCREEN (OVERLAY)       -->
     <!-- ===================================== -->
     <div
         id="roleScreen"
-        class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto"
+        class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto"
     >
-        <div class="bg-white max-w-2xl w-full rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-8 my-auto">
+        <div class="bg-white max-w-4xl w-full rounded-3xl shadow-2xl border border-slate-100 p-5 sm:p-8 my-auto">
             
-            <div class="text-center mb-8">
+            <div class="text-center mb-6">
                 <span class="inline-block bg-brand-50 text-brand-600 text-xs font-bold px-3 py-1 rounded-full border border-brand-100 mb-2">
                     Campus Voice Portal
                 </span>
                 <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                     Welcome to Campus Voice
                 </h2>
-                <p class="text-slate-500 text-sm mt-1">
-                    Select your role to access Government Engineering College announcements
+                <p class="text-slate-500 text-xs sm:text-sm mt-1 max-w-lg mx-auto">
+                    Sign in with your student account or enter faculty credentials to access Government Engineering College announcements.
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 
-                <!-- Student Card -->
-                <div class="border-2 border-slate-200 hover:border-brand-500 rounded-2xl p-5 sm:p-6 transition flex flex-col justify-between hover:shadow-lg bg-slate-50/50 hover:bg-white group">
+                <!-- ===================================== -->
+                <!-- STUDENT PORTAL CARD (LOGIN / REGISTER)-->
+                <!-- ===================================== -->
+                <div class="border-2 border-slate-200 hover:border-brand-500 rounded-2xl p-5 sm:p-6 transition flex flex-col justify-between bg-slate-50/50 hover:bg-white shadow-xs hover:shadow-md">
                     <div>
-                        <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
-                            🎓
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-900 mb-1">
-                            I'm a Student
-                        </h3>
-                        <p class="text-slate-600 text-xs sm:text-sm leading-relaxed mb-4">
-                            Browse official campus notices, upvote trending updates, preview and download circulars, and bookmark posts for easy review.
-                        </p>
-                    </div>
-
-                    <button
-                        id="selectStudentBtn"
-                        type="button"
-                        class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition shadow-sm hover:shadow"
-                    >
-                        Continue as Student →
-                    </button>
-                </div>
-
-                <!-- Faculty Card -->
-                <div class="border-2 border-slate-200 hover:border-amber-500 rounded-2xl p-5 sm:p-6 transition flex flex-col justify-between hover:shadow-lg bg-slate-50/50 hover:bg-white group">
-                    <div>
-                        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
-                            🏛️
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-900 mb-1">
-                            I'm Faculty
-                        </h3>
-                        <p class="text-slate-600 text-xs sm:text-sm leading-relaxed mb-3">
-                            Publish circulars with file attachments, edit and delete your notices, and monitor student upvotes and reach.
-                        </p>
-
-                        <!-- Faculty Verification Fields -->
-                        <div class="space-y-2.5 mb-4 pt-2 border-t border-slate-200 text-left">
+                        <!-- Card Header -->
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl flex-shrink-0">
+                                🎓
+                            </div>
                             <div>
-                                <label for="facultyPasscode" class="block text-[11px] font-semibold text-slate-600 mb-1">
-                                    Faculty Passcode <span class="text-slate-400 font-normal">(demo: faculty123)</span>
+                                <h3 class="text-base sm:text-lg font-bold text-slate-900">
+                                    Student Portal
+                                </h3>
+                                <p class="text-[11px] text-slate-500">
+                                    Branch-specific circulars &amp; announcements
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Login / Register Tab Switcher -->
+                        <div class="flex p-1 bg-slate-200/80 rounded-xl mb-4 border border-slate-200">
+                            <button
+                                id="studentTabLoginBtn"
+                                type="button"
+                                class="flex-1 py-1.5 text-xs font-bold rounded-lg transition bg-brand-600 text-white shadow-xs"
+                            >
+                                Log In
+                            </button>
+                            <button
+                                id="studentTabRegisterBtn"
+                                type="button"
+                                class="flex-1 py-1.5 text-xs font-semibold rounded-lg transition text-slate-600 hover:text-slate-900"
+                            >
+                                Register
+                            </button>
+                        </div>
+
+                        <!-- TAB 1: STUDENT LOGIN FORM -->
+                        <form id="studentLoginForm" class="space-y-3">
+                            <div>
+                                <label for="studentLoginId" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                    USN or College Email
                                 </label>
                                 <input
-                                    id="facultyPasscode"
-                                    type="password"
-                                    placeholder="Enter demo passcode"
-                                    class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                    id="studentLoginId"
+                                    type="text"
+                                    required
+                                    placeholder="e.g. 1GE22CS045 or student@gec.edu"
+                                    class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
                                 >
                             </div>
 
                             <div>
+                                <label for="studentLoginPassword" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                    Password
+                                </label>
+                                <div class="relative">
+                                    <input
+                                        id="studentLoginPassword"
+                                        type="password"
+                                        required
+                                        placeholder="Enter your password"
+                                        class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 pr-9 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
+                                    >
+                                    <button
+                                        type="button"
+                                        class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 text-xs"
+                                        data-target="studentLoginPassword"
+                                        title="Show / hide password"
+                                    >
+                                        👁
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p id="studentLoginError" class="text-rose-600 text-xs hidden font-medium"></p>
+
+                            <button
+                                id="studentLoginSubmitBtn"
+                                type="submit"
+                                class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition shadow-sm hover:shadow mt-2"
+                            >
+                                Log In as Student →
+                            </button>
+
+                            <p class="text-center text-[11px] text-slate-400 pt-1">
+                                Don't have an account? 
+                                <button type="button" id="switchToRegisterLink" class="text-brand-600 font-semibold hover:underline">
+                                    Register here
+                                </button>
+                            </p>
+                        </form>
+
+                        <!-- TAB 2: STUDENT REGISTER FORM -->
+                        <form id="studentRegisterForm" class="space-y-2.5 hidden">
+                            <div>
+                                <label for="studentRegName" class="block text-[11px] font-semibold text-slate-600 mb-0.5">
+                                    Full Name *
+                                </label>
+                                <input
+                                    id="studentRegName"
+                                    type="text"
+                                    required
+                                    placeholder="e.g. Aditya Sharma"
+                                    class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
+                                >
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div>
+                                    <label for="studentRegUsn" class="block text-[11px] font-semibold text-slate-600 mb-0.5">
+                                        USN * <span class="text-slate-400 font-normal">(auto-detects branch)</span>
+                                    </label>
+                                    <input
+                                        id="studentRegUsn"
+                                        type="text"
+                                        required
+                                        placeholder="e.g. 1GE22CS045"
+                                        class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-mono uppercase focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
+                                    >
+                                </div>
+
+                                <div>
+                                    <label for="studentRegBranch" class="block text-[11px] font-semibold text-slate-600 mb-0.5">
+                                        Branch *
+                                    </label>
+                                    <select
+                                        id="studentRegBranch"
+                                        required
+                                        class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+                                    >
+                                        <!-- Populated dynamically via BRANCHES constant -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div>
+                                    <label for="studentRegEmail" class="block text-[11px] font-semibold text-slate-600 mb-0.5">
+                                        Email Address *
+                                    </label>
+                                    <input
+                                        id="studentRegEmail"
+                                        type="email"
+                                        required
+                                        placeholder="e.g. aditya@gec.edu"
+                                        class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
+                                    >
+                                </div>
+
+                                <div>
+                                    <label for="studentRegSemester" class="block text-[11px] font-semibold text-slate-600 mb-0.5">
+                                        Semester <span class="text-slate-400 font-normal">(optional)</span>
+                                    </label>
+                                    <select
+                                        id="studentRegSemester"
+                                        class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+                                    >
+                                        <option value="">Select Semester (Optional)</option>
+                                        <option value="1st Semester">1st Semester</option>
+                                        <option value="2nd Semester">2nd Semester</option>
+                                        <option value="3rd Semester">3rd Semester</option>
+                                        <option value="4th Semester">4th Semester</option>
+                                        <option value="5th Semester">5th Semester</option>
+                                        <option value="6th Semester">6th Semester</option>
+                                        <option value="7th Semester">7th Semester</option>
+                                        <option value="8th Semester">8th Semester</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div>
+                                    <label for="studentRegPassword" class="block text-[11px] font-semibold text-slate-600 mb-0.5">
+                                        Password (min 6) *
+                                    </label>
+                                    <div class="relative">
+                                        <input
+                                            id="studentRegPassword"
+                                            type="password"
+                                            minlength="6"
+                                            required
+                                            placeholder="Min 6 characters"
+                                            class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
+                                        >
+                                        <button
+                                            type="button"
+                                            class="password-toggle absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-700 text-xs"
+                                            data-target="studentRegPassword"
+                                        >
+                                            👁
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="studentRegConfirmPassword" class="block text-[11px] font-semibold text-slate-600 mb-0.5">
+                                        Confirm Password *
+                                    </label>
+                                    <div class="relative">
+                                        <input
+                                            id="studentRegConfirmPassword"
+                                            type="password"
+                                            required
+                                            placeholder="Confirm password"
+                                            class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
+                                        >
+                                        <button
+                                            type="button"
+                                            class="password-toggle absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-700 text-xs"
+                                            data-target="studentRegConfirmPassword"
+                                        >
+                                            👁
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p id="studentRegError" class="text-rose-600 text-xs hidden font-medium"></p>
+
+                            <button
+                                id="studentRegSubmitBtn"
+                                type="submit"
+                                class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition shadow-sm hover:shadow mt-1"
+                            >
+                                Create Student Account →
+                            </button>
+
+                            <p class="text-center text-[11px] text-slate-400 pt-1">
+                                Already have an account? 
+                                <button type="button" id="switchToLoginLink" class="text-brand-600 font-semibold hover:underline">
+                                    Log in
+                                </button>
+                            </p>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ===================================== -->
+                <!-- FACULTY PORTAL CARD                   -->
+                <!-- ===================================== -->
+                <div class="border-2 border-slate-200 hover:border-amber-500 rounded-2xl p-5 sm:p-6 transition flex flex-col justify-between bg-slate-50/50 hover:bg-white shadow-xs hover:shadow-md">
+                    <div>
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl flex-shrink-0">
+                                🏛️
+                            </div>
+                            <div>
+                                <h3 class="text-base sm:text-lg font-bold text-slate-900">
+                                    Faculty &amp; Staff Portal
+                                </h3>
+                                <p class="text-[11px] text-slate-500">
+                                    Publish targeted circulars and attachments
+                                </p>
+                            </div>
+                        </div>
+
+                        <p class="text-slate-600 text-xs sm:text-sm leading-relaxed mb-4">
+                            Faculty members can publish official announcements targeting all students or specific engineering branches, manage uploaded attachments, and view analytics.
+                        </p>
+
+                        <!-- Faculty Credentials -->
+                        <div class="space-y-3 pt-3 border-t border-slate-200 text-left">
+                            <div>
+                                <label for="facultyPasscode" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                    Faculty Passcode <span class="text-slate-400 font-normal">(demo: faculty123)</span>
+                                </label>
+                                <div class="relative">
+                                    <input
+                                        id="facultyPasscode"
+                                        type="password"
+                                        placeholder="Enter demo passcode"
+                                        class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 pr-9 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 transition"
+                                    >
+                                    <button
+                                        type="button"
+                                        class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 text-xs"
+                                        data-target="facultyPasscode"
+                                        title="Show / hide password"
+                                    >
+                                        👁
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
                                 <label for="facultyNameInput" class="block text-[11px] font-semibold text-slate-600 mb-1">
-                                    Name & Department
+                                    Faculty Name &amp; Department
                                 </label>
                                 <input
                                     id="facultyNameInput"
                                     type="text"
                                     placeholder="e.g. Dr. Ramesh (CSE Dept)"
-                                    class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                    class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 transition"
                                 >
                             </div>
 
@@ -133,7 +369,7 @@
                     <button
                         id="selectFacultyBtn"
                         type="button"
-                        class="w-full bg-accent hover:bg-amber-400 text-brand-900 font-bold py-2.5 px-4 rounded-xl text-sm transition shadow-sm hover:shadow"
+                        class="w-full bg-accent hover:bg-amber-400 text-brand-900 font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition shadow-sm hover:shadow mt-5"
                     >
                         Enter as Faculty →
                     </button>
@@ -141,8 +377,8 @@
 
             </div>
 
-            <p class="text-center text-slate-400 text-xs mt-6">
-                You can switch your role at any time from the top navigation bar.
+            <p class="text-center text-slate-400 text-[11px] mt-6">
+                Active sessions persist across refreshes. You can log out or switch roles anytime.
             </p>
         </div>
     </div>
@@ -152,21 +388,21 @@
     <!-- 2. HEADER                             -->
     <!-- ===================================== -->
     <header class="bg-brand-900 text-white shadow-md sticky top-0 z-40">
-        <div class="max-w-6xl mx-auto px-4 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                 <div class="flex items-center gap-2.5">
                     <span class="text-2xl">📢</span>
-                    <h1 id="appTitle" class="text-2xl font-bold tracking-tight">Campus Voice</h1>
+                    <h1 id="appTitle" class="text-xl sm:text-2xl font-bold tracking-tight">Campus Voice</h1>
                 </div>
 
-                <!-- Role Badge -->
+                <!-- Dynamic Role & Branch Badge -->
                 <div class="flex items-center gap-2">
-                    <span id="roleBadge" class="text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider bg-brand-800 text-indigo-200 border border-indigo-700/60">
-                        Student
+                    <span id="roleBadge" class="text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider bg-brand-800 text-indigo-200 border border-indigo-700/60 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Student
                     </span>
                     <span class="hidden sm:inline text-indigo-400 text-xs">|</span>
-                    <p class="text-indigo-200 text-xs sm:text-sm font-medium">
+                    <p class="text-indigo-200 text-xs font-medium truncate max-w-[200px] sm:max-w-none">
                         Government Engineering College
                     </p>
                 </div>
@@ -174,21 +410,35 @@
 
             <!-- Header Action Buttons -->
             <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-                <!-- Switch Role Button -->
+                
+                <!-- Student Profile Button (Student Only) -->
+                <button
+                    id="studentProfileBtn"
+                    type="button"
+                    class="student-only flex items-center gap-2 bg-brand-800 hover:bg-brand-700 border border-indigo-700/70 text-indigo-100 hover:text-white px-2.5 py-1.5 rounded-xl transition shadow-xs text-xs font-semibold"
+                    title="Click to view and edit your student profile"
+                >
+                    <div id="studentHeaderAvatar" class="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-brand-500 text-white text-[11px] font-bold flex items-center justify-center border border-indigo-300">
+                        ST
+                    </div>
+                    <span class="hidden md:inline" id="studentHeaderName">Profile</span>
+                </button>
+
+                <!-- Switch Role / Logout Button -->
                 <button
                     id="switchRoleBtn"
                     type="button"
-                    class="bg-brand-800 hover:bg-brand-700 text-indigo-100 hover:text-white border border-indigo-700/70 font-medium text-xs sm:text-sm px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm"
-                    title="Switch user role or logout"
+                    class="bg-brand-800 hover:bg-brand-700 text-indigo-100 hover:text-white border border-indigo-700/70 font-medium text-xs px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-xs"
+                    title="Log out or switch user role"
                 >
                     <span>🔄</span>
-                    <span>Switch Role</span>
+                    <span id="logoutBtnLabel">Switch Role</span>
                 </button>
 
                 <!-- Post Notice Button (Faculty Only) -->
                 <button
                     id="openModalBtn"
-                    class="faculty-only bg-accent text-brand-900 font-bold px-4 py-2 rounded-xl hover:bg-amber-400 transition text-sm shadow-sm flex items-center gap-1.5"
+                    class="faculty-only bg-accent text-brand-900 font-bold px-4 py-2 rounded-xl hover:bg-amber-400 transition text-xs sm:text-sm shadow-sm flex items-center gap-1.5"
                 >
                     <span>+</span>
                     <span>Post Notice</span>
@@ -203,27 +453,27 @@
     <!-- 3. HERO / STATISTICS                  -->
     <!-- ===================================== -->
     <section class="bg-brand-800 text-white border-b border-indigo-700/50">
-        <div class="max-w-6xl mx-auto px-4 py-7 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
             
             <div>
                 <h2 id="heroTitle" class="text-2xl sm:text-3xl font-bold tracking-tight">
                     What's happening on campus?
                 </h2>
-                <p id="heroSubtitle" class="text-indigo-200 text-sm sm:text-base mt-1.5">
-                    Search, explore and share important campus updates.
+                <p id="heroSubtitle" class="text-indigo-200 text-xs sm:text-sm mt-1">
+                    Search, explore and share branch-specific and campus-wide announcements.
                 </p>
             </div>
 
             <!-- Metrics -->
             <div class="flex gap-3">
-                <div class="bg-brand-900/70 border border-indigo-700/40 rounded-xl px-5 py-3 text-center min-w-[100px] shadow-sm">
+                <div class="bg-brand-900/70 border border-indigo-700/40 rounded-xl px-4 py-2.5 text-center min-w-[95px] shadow-sm">
                     <span id="totalCount" class="block text-2xl font-extrabold text-accent">0</span>
-                    <span class="text-xs text-indigo-200 font-medium">Total Notices</span>
+                    <span class="text-[11px] text-indigo-200 font-medium">Visible Notices</span>
                 </div>
 
-                <div class="bg-brand-900/70 border border-indigo-700/40 rounded-xl px-5 py-3 text-center min-w-[100px] shadow-sm">
+                <div class="bg-brand-900/70 border border-indigo-700/40 rounded-xl px-4 py-2.5 text-center min-w-[95px] shadow-sm">
                     <span id="trendingCount" class="block text-2xl font-extrabold text-emerald-400">0</span>
-                    <span class="text-xs text-indigo-200 font-medium">Trending</span>
+                    <span class="text-[11px] text-indigo-200 font-medium">Trending</span>
                 </div>
             </div>
 
@@ -234,7 +484,7 @@
     <!-- ===================================== -->
     <!-- 4. MAIN CONTENT                       -->
     <!-- ===================================== -->
-    <main class="max-w-6xl mx-auto px-4 py-7 flex-1 w-full">
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full">
 
         <!-- ===================================== -->
         <!-- FACULTY DASHBOARD STRIP (FACULTY ONLY)-->
@@ -243,11 +493,11 @@
             id="facultyDashboard"
             class="faculty-only bg-gradient-to-r from-brand-900 to-indigo-900 text-white rounded-2xl p-5 mb-6 shadow-md border border-indigo-700/50"
         >
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3.5 mb-3.5 border-b border-indigo-800/80">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 mb-3 border-b border-indigo-800/80">
                 <div class="flex items-center gap-2">
                     <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-                    <h3 class="font-bold text-base sm:text-lg text-white">Faculty Dashboard</h3>
-                    <span class="text-[11px] bg-brand-950/70 text-indigo-200 px-2 py-0.5 rounded border border-indigo-700/50">Control Panel</span>
+                    <h3 class="font-bold text-base text-white">Faculty Dashboard</h3>
+                    <span class="text-[10px] bg-brand-950/70 text-indigo-200 px-2 py-0.5 rounded border border-indigo-700/50">Admin Center</span>
                 </div>
 
                 <div class="text-xs text-indigo-300">
@@ -256,33 +506,66 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                <div class="bg-brand-950/50 rounded-xl p-3.5 border border-indigo-800/60">
+                <div class="bg-brand-950/50 rounded-xl p-3 border border-indigo-800/60">
                     <span class="text-xs text-indigo-300 block font-medium">Notices Posted by Me</span>
-                    <span id="myNoticesCount" class="text-2xl font-bold text-amber-400 mt-1 block">0</span>
+                    <span id="myNoticesCount" class="text-2xl font-bold text-amber-400 mt-0.5 block">0</span>
                 </div>
 
-                <div class="bg-brand-950/50 rounded-xl p-3.5 border border-indigo-800/60">
+                <div class="bg-brand-950/50 rounded-xl p-3 border border-indigo-800/60">
                     <span class="text-xs text-indigo-300 block font-medium">Total Upvotes on My Notices</span>
-                    <span id="myUpvotesCount" class="text-2xl font-bold text-emerald-400 mt-1 block">0</span>
+                    <span id="myUpvotesCount" class="text-2xl font-bold text-emerald-400 mt-0.5 block">0</span>
                 </div>
 
-                <div class="bg-brand-950/50 rounded-xl p-3.5 border border-indigo-800/60 overflow-hidden">
-                    <span class="text-xs text-indigo-300 block font-medium">Most Upvoted Notice</span>
-                    <span id="myTopNotice" class="text-sm font-semibold text-indigo-100 mt-1 block truncate" title="Top Notice">None</span>
+                <div class="bg-brand-950/50 rounded-xl p-3 border border-indigo-800/60 overflow-hidden">
+                    <span class="text-xs text-indigo-300 block font-medium">Top Notice</span>
+                    <span id="myTopNotice" class="text-xs font-semibold text-indigo-100 mt-1 block truncate" title="Top Notice">None</span>
                 </div>
             </div>
         </div>
 
 
         <!-- ===================================== -->
-        <!-- SEARCH + SORT + CATEGORIES            -->
+        <!-- STUDENT BRANCH FEED TOGGLE (STUDENT)  -->
         <!-- ===================================== -->
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 mb-6">
+        <div id="studentFeedToggleContainer" class="student-only mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white border border-slate-200 rounded-2xl p-3 sm:px-4 shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                    Feed View:
+                </span>
+                <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+                    <button
+                        id="feedMyBranchBtn"
+                        type="button"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs bg-brand-600 text-white"
+                        title="Show notices relevant to your branch and campus-wide notices"
+                    >
+                        🎯 My Branch (<span id="feedBranchLabel">CSE</span>)
+                    </button>
+                    <button
+                        id="feedAllBtn"
+                        type="button"
+                        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900"
+                        title="Browse all campus announcements across every branch"
+                    >
+                        🌐 All Notices
+                    </button>
+                </div>
+            </div>
+            <p id="feedAudienceHint" class="text-[11px] text-slate-500">
+                Filtered for your branch and college-wide circulars
+            </p>
+        </div>
+
+
+        <!-- ===================================== -->
+        <!-- SEARCH + SORT + AUDIENCE + CATEGORIES -->
+        <!-- ===================================== -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 sm:p-5 mb-6">
             
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 
                 <!-- Search Input -->
-                <div class="flex gap-2 w-full md:w-1/2">
+                <div class="flex gap-2 w-full lg:w-5/12">
                     <div class="relative w-full">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 text-sm">
                             🔍
@@ -290,32 +573,51 @@
                         <input
                             id="searchInput"
                             type="text"
-                            placeholder="Search announcements, departments..."
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition"
+                            placeholder="Search circulars, topics, authors..."
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition"
                         >
                     </div>
 
                     <button
                         id="clearSearchBtn"
-                        class="px-3.5 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold hover:bg-slate-100 transition text-slate-600"
+                        class="px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-semibold hover:bg-slate-100 transition text-slate-600"
                     >
                         Clear
                     </button>
                 </div>
 
-                <!-- Sort Dropdown -->
-                <div class="flex items-center gap-2 self-start md:self-auto">
-                    <label for="sortSelect" class="text-xs sm:text-sm font-semibold text-slate-500 whitespace-nowrap">
-                        Sort by:
-                    </label>
+                <!-- Controls: Audience Filter (Faculty) & Sort Dropdown -->
+                <div class="flex items-center gap-3 flex-wrap">
+                    
+                    <!-- Faculty Audience Filter Dropdown -->
+                    <div class="faculty-only flex items-center gap-2">
+                        <label for="facultyAudienceFilter" class="text-xs font-bold text-slate-600 whitespace-nowrap uppercase tracking-wider">
+                            Audience:
+                        </label>
+                        <select
+                            id="facultyAudienceFilter"
+                            class="border border-slate-200 bg-slate-50 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer font-medium"
+                        >
+                            <option value="all">All Audiences (Every Notice)</option>
+                            <option value="campus-wide">Campus-wide (All Branches)</option>
+                            <!-- Populated with BRANCHES -->
+                        </select>
+                    </div>
 
-                    <select
-                        id="sortSelect"
-                        class="border border-slate-200 bg-slate-50 rounded-xl px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
-                    >
-                        <option value="latest">Latest First</option>
-                        <option value="upvotes">Most Upvoted</option>
-                    </select>
+                    <!-- Sort Dropdown -->
+                    <div class="flex items-center gap-2">
+                        <label for="sortSelect" class="text-xs font-bold text-slate-500 whitespace-nowrap uppercase tracking-wider">
+                            Sort:
+                        </label>
+                        <select
+                            id="sortSelect"
+                            class="border border-slate-200 bg-slate-50 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer font-medium"
+                        >
+                            <option value="latest">Latest First</option>
+                            <option value="upvotes">Most Upvoted</option>
+                        </select>
+                    </div>
+
                 </div>
 
             </div>
@@ -323,7 +625,7 @@
             <!-- Category Filters -->
             <div id="filterContainer" class="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-slate-100">
                 <button class="filter-pill active-pill" data-category="All">
-                    All Notices
+                    All Categories
                 </button>
 
                 <button class="filter-pill" data-category="Placements">
@@ -346,6 +648,17 @@
                 <button id="savedFilterPill" class="filter-pill student-only" data-category="Saved">
                     ★ Saved
                 </button>
+
+                <!-- Faculty Only: Add Category Button -->
+                <button
+                    id="openAddCategoryBtn"
+                    type="button"
+                    class="filter-pill faculty-only border-dashed border-indigo-400 text-indigo-700 bg-indigo-50/60 hover:bg-indigo-100 hover:border-indigo-600 font-semibold cursor-pointer"
+                    title="Create a new announcement category"
+                >
+                    <span>➕</span>
+                    <span>New Category</span>
+                </button>
             </div>
 
         </div>
@@ -367,14 +680,14 @@
         <!-- ===================================== -->
         <div
             id="emptyState"
-            class="hidden text-center bg-white border border-dashed border-slate-300 rounded-2xl py-14 px-4 mt-5 shadow-sm"
+            class="hidden text-center bg-white border border-dashed border-slate-300 rounded-2xl py-14 px-4 mt-5 shadow-xs"
         >
             <div class="text-4xl mb-3">📭</div>
-            <h3 id="emptyTitle" class="text-lg sm:text-xl font-bold text-slate-700">
+            <h3 id="emptyTitle" class="text-base sm:text-lg font-bold text-slate-700">
                 No announcements found
             </h3>
-            <p id="emptyDesc" class="text-slate-500 text-sm mt-1.5">
-                Try another search query or category filter.
+            <p id="emptyDesc" class="text-slate-500 text-xs sm:text-sm mt-1 max-w-sm mx-auto">
+                Try switching feed view or choosing another category filter.
             </p>
         </div>
 
@@ -382,7 +695,227 @@
 
 
     <!-- ===================================== -->
-    <!-- 5. POST / EDIT NOTICE MODAL           -->
+    <!-- 5. STUDENT PROFILE MODAL              -->
+    <!-- ===================================== -->
+    <div
+        id="studentProfileModal"
+        class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto"
+    >
+        <div class="bg-white max-w-md w-full rounded-2xl shadow-2xl border border-slate-100 p-6 my-auto max-h-[90vh] overflow-y-auto">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div id="profileHeaderAvatar" class="w-11 h-11 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-500 text-white font-bold flex items-center justify-center text-sm shadow-sm border border-indigo-200">
+                        ST
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Student Profile</h3>
+                        <p class="text-[11px] text-slate-500">Government Engineering College</p>
+                    </div>
+                </div>
+
+                <button
+                    id="closeProfileBtn"
+                    type="button"
+                    class="text-2xl text-slate-400 hover:text-slate-700 transition leading-none"
+                    title="Close"
+                >
+                    &times;
+                </button>
+            </div>
+
+            <!-- Profile Form -->
+            <form id="studentProfileForm" class="space-y-3.5 pt-4">
+                
+                <!-- USN (Read-Only) -->
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                            USN (University Seat Number)
+                        </label>
+                        <span class="text-[10px] text-slate-400 font-medium">Read-only</span>
+                    </div>
+                    <input
+                        id="profileUsn"
+                        type="text"
+                        readonly
+                        class="form-control bg-slate-100 text-slate-500 font-mono font-semibold cursor-not-allowed select-none"
+                    >
+                </div>
+
+                <!-- Full Name -->
+                <div>
+                    <label for="profileName" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                        Full Name *
+                    </label>
+                    <input
+                        id="profileName"
+                        type="text"
+                        required
+                        placeholder="Enter full name"
+                        class="form-control"
+                    >
+                </div>
+
+                <!-- Branch -->
+                <div>
+                    <label for="profileBranch" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                        Branch / Department *
+                    </label>
+                    <select id="profileBranch" required class="form-control cursor-pointer">
+                        <!-- Populated from BRANCHES -->
+                    </select>
+                </div>
+
+                <!-- Email Address -->
+                <div>
+                    <label for="profileEmail" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                        Email Address *
+                    </label>
+                    <input
+                        id="profileEmail"
+                        type="email"
+                        required
+                        placeholder="e.g. student@gec.edu"
+                        class="form-control"
+                    >
+                </div>
+
+                <!-- Semester -->
+                <div>
+                    <label for="profileSemester" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                        Semester
+                    </label>
+                    <select id="profileSemester" class="form-control cursor-pointer">
+                        <option value="">Select Semester (Optional)</option>
+                        <option value="1st Semester">1st Semester</option>
+                        <option value="2nd Semester">2nd Semester</option>
+                        <option value="3rd Semester">3rd Semester</option>
+                        <option value="4th Semester">4th Semester</option>
+                        <option value="5th Semester">5th Semester</option>
+                        <option value="6th Semester">6th Semester</option>
+                        <option value="7th Semester">7th Semester</option>
+                        <option value="8th Semester">8th Semester</option>
+                    </select>
+                </div>
+
+                <!-- Change Password Box (Optional) -->
+                <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/70 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                            <span>🔐</span> Change Password
+                        </span>
+                        <span class="text-[10px] text-slate-400">Optional</span>
+                    </div>
+
+                    <div>
+                        <label for="profileCurrentPassword" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                            Current Password
+                        </label>
+                        <div class="relative">
+                            <input
+                                id="profileCurrentPassword"
+                                type="password"
+                                placeholder="Required to set new password"
+                                class="form-control pr-8 text-xs"
+                            >
+                            <button
+                                type="button"
+                                class="password-toggle absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-700 text-xs"
+                                data-target="profileCurrentPassword"
+                            >
+                                👁
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                            <label for="profileNewPassword" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                New Password
+                            </label>
+                            <div class="relative">
+                                <input
+                                    id="profileNewPassword"
+                                    type="password"
+                                    minlength="6"
+                                    placeholder="Min 6 characters"
+                                    class="form-control pr-8 text-xs"
+                                >
+                                <button
+                                    type="button"
+                                    class="password-toggle absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-700 text-xs"
+                                    data-target="profileNewPassword"
+                                >
+                                    👁
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="profileConfirmPassword" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                Confirm New Password
+                            </label>
+                            <div class="relative">
+                                <input
+                                    id="profileConfirmPassword"
+                                    type="password"
+                                    placeholder="Confirm password"
+                                    class="form-control pr-8 text-xs"
+                                >
+                                <button
+                                    type="button"
+                                    class="password-toggle absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-700 text-xs"
+                                    data-target="profileConfirmPassword"
+                                >
+                                    👁
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p id="profileError" class="text-rose-600 text-xs hidden font-medium"></p>
+
+                <!-- Profile Modal Action Buttons -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <button
+                            id="profileLogoutBtn"
+                            type="button"
+                            class="px-3 py-2 border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold rounded-xl text-xs transition"
+                        >
+                            Log Out
+                        </button>
+                        
+                        <button
+                            id="deleteAccountBtn"
+                            type="button"
+                            class="px-3 py-2 border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold rounded-xl text-xs transition"
+                            title="Permanently remove your student account"
+                        >
+                            Delete Account
+                        </button>
+                    </div>
+
+                    <button
+                        id="saveProfileBtn"
+                        type="submit"
+                        class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow-sm"
+                    >
+                        Save Changes
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- 6. POST / EDIT NOTICE MODAL           -->
     <!-- ===================================== -->
     <div
         id="noticeModal"
@@ -412,7 +945,7 @@
                 <!-- Title -->
                 <div>
                     <label for="noticeTitle" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
-                        Notice Title
+                        Notice Title *
                     </label>
                     <input
                         id="noticeTitle"
@@ -425,9 +958,19 @@
 
                 <!-- Category -->
                 <div>
-                    <label for="noticeCategory" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
-                        Category
-                    </label>
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="noticeCategory" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                            Category *
+                        </label>
+                        <button
+                            id="inlineAddCategoryBtn"
+                            type="button"
+                            class="text-[11px] font-bold text-brand-600 hover:text-brand-800 hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                            <span>➕</span>
+                            <span>Create New Category</span>
+                        </button>
+                    </div>
                     <select id="noticeCategory" class="form-control cursor-pointer">
                         <option value="Placements">Placements</option>
                         <option value="Exams">Exams</option>
@@ -436,16 +979,58 @@
                     </select>
                 </div>
 
+                <!-- AUDIENCE TARGETING FIELD -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
+                        Target Audience *
+                    </label>
+                    
+                    <div class="flex items-center gap-5 mb-2.5">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
+                            <input
+                                type="radio"
+                                name="noticeAudienceType"
+                                id="audienceAll"
+                                value="all"
+                                checked
+                                class="text-brand-600 focus:ring-brand-500 cursor-pointer"
+                            >
+                            <span>All Branches (Campus-wide)</span>
+                        </label>
+
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
+                            <input
+                                type="radio"
+                                name="noticeAudienceType"
+                                id="audienceSpecific"
+                                value="branches"
+                                class="text-brand-600 focus:ring-brand-500 cursor-pointer"
+                            >
+                            <span>Specific Branches</span>
+                        </label>
+                    </div>
+
+                    <!-- Specific Branches Checkboxes Container -->
+                    <div id="specificBranchesContainer" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+                        <p class="text-[11px] font-semibold text-slate-600 mb-1.5">
+                            Select one or more eligible branches (at least one required):
+                        </p>
+                        <div id="branchCheckboxesList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <!-- Injected dynamically from BRANCHES constant -->
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Author / Department -->
                 <div>
                     <label for="noticeAuthor" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
-                        Author / Department
+                        Author / Department *
                     </label>
                     <input
                         id="noticeAuthor"
                         type="text"
                         required
-                        placeholder="e.g. Training & Placement Cell"
+                        placeholder="e.g. Training &amp; Placement Cell"
                         class="form-control"
                     >
                 </div>
@@ -454,7 +1039,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <label for="noticeDescription" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                            Description
+                            Description *
                         </label>
                         <span id="characterCount" class="text-xs text-slate-400 font-mono">
                             0 / 250
@@ -532,7 +1117,7 @@
                     <button
                         id="cancelModalBtn"
                         type="button"
-                        class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition"
+                        class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
                     >
                         Cancel
                     </button>
@@ -540,7 +1125,7 @@
                     <button
                         id="modalSubmitBtn"
                         type="submit"
-                        class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2 rounded-xl text-sm transition shadow-sm"
+                        class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2 rounded-xl text-xs transition shadow-sm"
                     >
                         Publish Notice
                     </button>
@@ -553,7 +1138,85 @@
 
 
     <!-- ===================================== -->
-    <!-- 6. IN-WEBSITE FILE VIEWER MODAL       -->
+    <!-- 6.5 CREATE CATEGORY MODAL (Faculty)   -->
+    <!-- ===================================== -->
+    <div
+        id="categoryModal"
+        class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto"
+    >
+        <div class="bg-white max-w-md w-full rounded-2xl shadow-2xl border border-slate-100 p-6 my-auto animate-scale-up">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-2xl">🏷️</span>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">
+                            Create New Category
+                        </h3>
+                        <p class="text-[11px] text-slate-400">
+                            Add a new announcement category for the college
+                        </p>
+                    </div>
+                </div>
+
+                <button
+                    id="closeCategoryModalBtn"
+                    type="button"
+                    class="text-2xl text-slate-400 hover:text-slate-700 transition leading-none px-2 py-0.5 rounded-lg hover:bg-slate-100"
+                    title="Close (Esc)"
+                >
+                    &times;
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="categoryForm" class="space-y-4">
+                <div>
+                    <label for="newCategoryName" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                        Category Name *
+                    </label>
+                    <input
+                        id="newCategoryName"
+                        type="text"
+                        maxlength="30"
+                        required
+                        placeholder="e.g. Workshops, Sports, Seminars, Library..."
+                        class="form-control"
+                        autocomplete="off"
+                    >
+                    <p class="text-[11px] text-slate-400 mt-1">
+                        Up to 30 characters. Will appear in category filters and post creation.
+                    </p>
+                </div>
+
+                <div id="categoryError" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-2.5 font-medium"></div>
+
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button
+                        id="cancelCategoryBtn"
+                        type="button"
+                        class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        id="submitCategoryBtn"
+                        type="submit"
+                        class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2 rounded-xl text-xs transition shadow-sm flex items-center gap-1.5"
+                    >
+                        <span>✓</span>
+                        <span>Save Category</span>
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- 7. IN-WEBSITE FILE VIEWER MODAL       -->
     <!-- ===================================== -->
     <div
         id="fileViewerModal"
@@ -566,7 +1229,7 @@
             <div class="flex items-center gap-2.5 overflow-hidden">
                 <span id="viewerFileIcon" class="text-xl flex-shrink-0">📄</span>
                 <div class="overflow-hidden">
-                    <h3 id="viewerFileName" class="text-sm font-bold truncate max-w-[160px] sm:max-w-xs md:max-w-md text-slate-100">
+                    <h3 id="viewerFileName" class="text-xs sm:text-sm font-bold truncate max-w-[160px] sm:max-w-xs md:max-w-md text-slate-100">
                         filename.pdf
                     </h3>
                     <p id="viewerFileSize" class="text-[11px] text-slate-400">
@@ -627,10 +1290,10 @@
         </div>
 
         <!-- Viewer Scrollable Body -->
-        <div id="fileViewerBody" class="flex-1 overflow-auto p-4 sm:p-6 flex items-center justify-center relative bg-slate-950/60">
+        <div id="fileViewerBody" class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 flex flex-col items-center justify-start relative bg-slate-950/60">
             
             <!-- Loading Spinner -->
-            <div id="viewerLoadingSpinner" class="flex flex-col items-center justify-center gap-3 text-slate-300 py-12">
+            <div id="viewerLoadingSpinner" class="flex flex-col items-center justify-center gap-3 text-slate-300 py-12 my-auto">
                 <div class="w-10 h-10 border-4 border-slate-700 border-t-brand-500 rounded-full animate-spin"></div>
                 <p class="text-xs font-medium text-slate-300">
                     Loading preview...
@@ -638,7 +1301,7 @@
             </div>
 
             <!-- Error State with Direct Download Fallback -->
-            <div id="viewerErrorState" class="hidden text-center bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-md mx-auto text-white shadow-2xl">
+            <div id="viewerErrorState" class="hidden text-center bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-md mx-auto my-auto text-white shadow-2xl">
                 <div class="text-3xl mb-2">⚠️</div>
                 <h4 class="font-bold text-sm mb-1 text-slate-200">
                     Preview Not Available
@@ -656,7 +1319,7 @@
             </div>
 
             <!-- Dynamic Preview Content (Image / PDF canvases) -->
-            <div id="fileViewerContent" class="w-full h-full flex flex-col items-center justify-start hidden">
+            <div id="fileViewerContent" class="w-full max-w-3xl flex flex-col items-center justify-start hidden">
                 <!-- Content injected dynamically by app.js -->
             </div>
 
@@ -666,11 +1329,11 @@
 
 
     <!-- ===================================== -->
-    <!-- 7. TOAST MESSAGE                      -->
+    <!-- 8. TOAST NOTIFICATION                 -->
     <!-- ===================================== -->
     <div
         id="toast"
-        class="fixed bottom-5 right-5 bg-slate-900 text-white text-sm font-medium px-5 py-3 rounded-xl shadow-2xl hidden z-50 flex items-center gap-2.5 border border-slate-700"
+        class="fixed bottom-5 right-5 bg-slate-900 text-white text-xs sm:text-sm font-medium px-4 py-3 rounded-xl shadow-2xl hidden z-50 flex items-center gap-2.5 border border-slate-700"
     >
         <span class="text-amber-400">🔔</span>
         <span id="toastMessage">Action completed</span>
@@ -678,18 +1341,18 @@
 
 
     <!-- ===================================== -->
-    <!-- 8. FOOTER                             -->
+    <!-- 9. FOOTER                             -->
     <!-- ===================================== -->
     <footer class="bg-slate-900 text-slate-400 text-xs py-4 border-t border-slate-800 text-center">
         <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
             <p>Campus Voice &copy; 2026 Government Engineering College</p>
-            <p class="text-slate-500">Powered by Ahlya Technologies</p>
+            <p class="text-slate-500">Departmental Announcement &amp; Circular System</p>
         </div>
     </footer>
 
 
     <!-- ===================================== -->
-    <!-- 9. APPLICATION SCRIPT                 -->
+    <!-- 10. APPLICATION SCRIPT                -->
     <!-- ===================================== -->
     <script src="app.js"></script>
 
