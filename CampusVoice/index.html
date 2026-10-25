@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Voice | Government Engineering College</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Custom Theme Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: "#eef2ff",
+                            100: "#e0e7ff",
+                            500: "#6366f1",
+                            600: "#4f46e5",
+                            700: "#4338ca",
+                            800: "#3730a3",
+                            900: "#1e1b4b",
+                            950: "#0f0e26"
+                        },
+                        accent: "#f59e0b"
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans antialiased">
+
+    <!-- ===================================== -->
+    <!-- 1. ROLE SELECTION SCREEN (OVERLAY)   -->
+    <!-- ===================================== -->
+    <div
+        id="roleScreen"
+        class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto"
+    >
+        <div class="bg-white max-w-2xl w-full rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-8 my-auto">
+            
+            <div class="text-center mb-8">
+                <span class="inline-block bg-brand-50 text-brand-600 text-xs font-bold px-3 py-1 rounded-full border border-brand-100 mb-2">
+                    Campus Voice Portal
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Welcome to Campus Voice
+                </h2>
+                <p class="text-slate-500 text-sm mt-1">
+                    Select your role to access Government Engineering College announcements
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                
+                <!-- Student Card -->
+                <div class="border-2 border-slate-200 hover:border-brand-500 rounded-2xl p-5 sm:p-6 transition flex flex-col justify-between hover:shadow-lg bg-slate-50/50 hover:bg-white group">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+                            🎓
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-1">
+                            I'm a Student
+                        </h3>
+                        <p class="text-slate-600 text-xs sm:text-sm leading-relaxed mb-4">
+                            Browse official campus notices, upvote trending updates, and bookmark circulars for easy review.
+                        </p>
+                    </div>
+
+                    <button
+                        id="selectStudentBtn"
+                        type="button"
+                        class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition shadow-sm hover:shadow"
+                    >
+                        Continue as Student →
+                    </button>
+                </div>
+
+                <!-- Faculty Card -->
+                <div class="border-2 border-slate-200 hover:border-amber-500 rounded-2xl p-5 sm:p-6 transition flex flex-col justify-between hover:shadow-lg bg-slate-50/50 hover:bg-white group">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+                            🏛️
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-1">
+                            I'm Faculty
+                        </h3>
+                        <p class="text-slate-600 text-xs sm:text-sm leading-relaxed mb-3">
+                            Publish circulars, edit and delete your notices, and monitor student upvotes and reach.
+                        </p>
+
+                        <!-- Faculty Verification Fields -->
+                        <div class="space-y-2.5 mb-4 pt-2 border-t border-slate-200 text-left">
+                            <div>
+                                <label for="facultyPasscode" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                    Faculty Passcode <span class="text-slate-400 font-normal">(demo: faculty123)</span>
+                                </label>
+                                <input
+                                    id="facultyPasscode"
+                                    type="password"
+                                    placeholder="Enter demo passcode"
+                                    class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                >
+                            </div>
+
+                            <div>
+                                <label for="facultyNameInput" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                    Name & Department
+                                </label>
+                                <input
+                                    id="facultyNameInput"
+                                    type="text"
+                                    placeholder="e.g. Dr. Ramesh (CSE Dept)"
+                                    class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                >
+                            </div>
+
+                            <p id="facultyError" class="text-rose-600 text-xs hidden font-medium"></p>
+                        </div>
+                    </div>
+
+                    <button
+                        id="selectFacultyBtn"
+                        type="button"
+                        class="w-full bg-accent hover:bg-amber-400 text-brand-900 font-bold py-2.5 px-4 rounded-xl text-sm transition shadow-sm hover:shadow"
+                    >
+                        Enter as Faculty →
+                    </button>
+                </div>
+
+            </div>
+
+            <p class="text-center text-slate-400 text-xs mt-6">
+                You can switch your role at any time from the top navigation bar.
+            </p>
+        </div>
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- 2. HEADER                             -->
+    <!-- ===================================== -->
+    <header class="bg-brand-900 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-2xl">📢</span>
+                    <h1 id="appTitle" class="text-2xl font-bold tracking-tight">Campus Voice</h1>
+                </div>
+
+                <!-- Role Badge -->
+                <div class="flex items-center gap-2">
+                    <span id="roleBadge" class="text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider bg-brand-800 text-indigo-200 border border-indigo-700/60">
+                        Student
+                    </span>
+                    <span class="hidden sm:inline text-indigo-400 text-xs">|</span>
+                    <p class="text-indigo-200 text-xs sm:text-sm font-medium">
+                        Government Engineering College
+                    </p>
+                </div>
+            </div>
+
+            <!-- Header Action Buttons -->
+            <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+                <!-- Switch Role Button -->
+                <button
+                    id="switchRoleBtn"
+                    type="button"
+                    class="bg-brand-800 hover:bg-brand-700 text-indigo-100 hover:text-white border border-indigo-700/70 font-medium text-xs sm:text-sm px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm"
+                    title="Switch user role or logout"
+                >
+                    <span>🔄</span>
+                    <span>Switch Role</span>
+                </button>
+
+                <!-- Post Notice Button (Faculty Only) -->
+                <button
+                    id="openModalBtn"
+                    class="faculty-only bg-accent text-brand-900 font-bold px-4 py-2 rounded-xl hover:bg-amber-400 transition text-sm shadow-sm flex items-center gap-1.5"
+                >
+                    <span>+</span>
+                    <span>Post Notice</span>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+
+    <!-- ===================================== -->
+    <!-- 3. HERO / STATISTICS                  -->
+    <!-- ===================================== -->
+    <section class="bg-brand-800 text-white border-b border-indigo-700/50">
+        <div class="max-w-6xl mx-auto px-4 py-7 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            
+            <div>
+                <h2 id="heroTitle" class="text-2xl sm:text-3xl font-bold tracking-tight">
+                    What's happening on campus?
+                </h2>
+                <p id="heroSubtitle" class="text-indigo-200 text-sm sm:text-base mt-1.5">
+                    Search, explore and share important campus updates.
+                </p>
+            </div>
+
+            <!-- Metrics -->
+            <div class="flex gap-3">
+                <div class="bg-brand-900/70 border border-indigo-700/40 rounded-xl px-5 py-3 text-center min-w-[100px] shadow-sm">
+                    <span id="totalCount" class="block text-2xl font-extrabold text-accent">0</span>
+                    <span class="text-xs text-indigo-200 font-medium">Total Notices</span>
+                </div>
+
+                <div class="bg-brand-900/70 border border-indigo-700/40 rounded-xl px-5 py-3 text-center min-w-[100px] shadow-sm">
+                    <span id="trendingCount" class="block text-2xl font-extrabold text-emerald-400">0</span>
+                    <span class="text-xs text-indigo-200 font-medium">Trending</span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- ===================================== -->
+    <!-- 4. MAIN CONTENT                       -->
+    <!-- ===================================== -->
+    <main class="max-w-6xl mx-auto px-4 py-7 flex-1 w-full">
+
+        <!-- ===================================== -->
+        <!-- FACULTY DASHBOARD STRIP (FACULTY ONLY)-->
+        <!-- ===================================== -->
+        <div
+            id="facultyDashboard"
+            class="faculty-only bg-gradient-to-r from-brand-900 to-indigo-900 text-white rounded-2xl p-5 mb-6 shadow-md border border-indigo-700/50"
+        >
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3.5 mb-3.5 border-b border-indigo-800/80">
+                <div class="flex items-center gap-2">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                    <h3 class="font-bold text-base sm:text-lg text-white">Faculty Dashboard</h3>
+                    <span class="text-[11px] bg-brand-950/70 text-indigo-200 px-2 py-0.5 rounded border border-indigo-700/50">Control Panel</span>
+                </div>
+
+                <div class="text-xs text-indigo-300">
+                    Logged in as: <strong id="dashFacultyName" class="text-amber-300 font-semibold">Faculty</strong>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div class="bg-brand-950/50 rounded-xl p-3.5 border border-indigo-800/60">
+                    <span class="text-xs text-indigo-300 block font-medium">Notices Posted by Me</span>
+                    <span id="myNoticesCount" class="text-2xl font-bold text-amber-400 mt-1 block">0</span>
+                </div>
+
+                <div class="bg-brand-950/50 rounded-xl p-3.5 border border-indigo-800/60">
+                    <span class="text-xs text-indigo-300 block font-medium">Total Upvotes on My Notices</span>
+                    <span id="myUpvotesCount" class="text-2xl font-bold text-emerald-400 mt-1 block">0</span>
+                </div>
+
+                <div class="bg-brand-950/50 rounded-xl p-3.5 border border-indigo-800/60 overflow-hidden">
+                    <span class="text-xs text-indigo-300 block font-medium">Most Upvoted Notice</span>
+                    <span id="myTopNotice" class="text-sm font-semibold text-indigo-100 mt-1 block truncate" title="Top Notice">None</span>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ===================================== -->
+        <!-- SEARCH + SORT + CATEGORIES            -->
+        <!-- ===================================== -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 mb-6">
+            
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                
+                <!-- Search Input -->
+                <div class="flex gap-2 w-full md:w-1/2">
+                    <div class="relative w-full">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 text-sm">
+                            🔍
+                        </span>
+                        <input
+                            id="searchInput"
+                            type="text"
+                            placeholder="Search announcements, departments..."
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition"
+                        >
+                    </div>
+
+                    <button
+                        id="clearSearchBtn"
+                        class="px-3.5 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold hover:bg-slate-100 transition text-slate-600"
+                    >
+                        Clear
+                    </button>
+                </div>
+
+                <!-- Sort Dropdown -->
+                <div class="flex items-center gap-2 self-start md:self-auto">
+                    <label for="sortSelect" class="text-xs sm:text-sm font-semibold text-slate-500 whitespace-nowrap">
+                        Sort by:
+                    </label>
+
+                    <select
+                        id="sortSelect"
+                        class="border border-slate-200 bg-slate-50 rounded-xl px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+                    >
+                        <option value="latest">Latest First</option>
+                        <option value="upvotes">Most Upvoted</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <!-- Category Filters -->
+            <div id="filterContainer" class="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-slate-100">
+                <button class="filter-pill active-pill" data-category="All">
+                    All Notices
+                </button>
+
+                <button class="filter-pill" data-category="Placements">
+                    Placements
+                </button>
+
+                <button class="filter-pill" data-category="Exams">
+                    Exams
+                </button>
+
+                <button class="filter-pill" data-category="Hackathons">
+                    Hackathons
+                </button>
+
+                <button class="filter-pill" data-category="Cultural">
+                    Cultural
+                </button>
+
+                <!-- Student Only Saved Filter Pill -->
+                <button id="savedFilterPill" class="filter-pill student-only" data-category="Saved">
+                    ★ Saved
+                </button>
+            </div>
+
+        </div>
+
+
+        <!-- ===================================== -->
+        <!-- DYNAMIC NOTICES GRID                  -->
+        <!-- ===================================== -->
+        <div
+            id="cardsGrid"
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+        >
+            <!-- JavaScript renders notice cards here -->
+        </div>
+
+
+        <!-- ===================================== -->
+        <!-- EMPTY STATE                           -->
+        <!-- ===================================== -->
+        <div
+            id="emptyState"
+            class="hidden text-center bg-white border border-dashed border-slate-300 rounded-2xl py-14 px-4 mt-5 shadow-sm"
+        >
+            <div class="text-4xl mb-3">📭</div>
+            <h3 id="emptyTitle" class="text-lg sm:text-xl font-bold text-slate-700">
+                No announcements found
+            </h3>
+            <p id="emptyDesc" class="text-slate-500 text-sm mt-1.5">
+                Try another search query or category filter.
+            </p>
+        </div>
+
+    </main>
+
+
+    <!-- ===================================== -->
+    <!-- 5. POST / EDIT NOTICE MODAL           -->
+    <!-- ===================================== -->
+    <div
+        id="noticeModal"
+        class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto"
+    >
+        <div class="bg-white max-w-lg w-full rounded-2xl shadow-2xl border border-slate-100 p-6 my-auto">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+                <h2 id="modalTitle" class="text-xl font-bold text-slate-900">
+                    Post New Notice
+                </h2>
+
+                <button
+                    id="closeModalBtn"
+                    type="button"
+                    class="text-2xl text-slate-400 hover:text-slate-700 transition leading-none"
+                    title="Close"
+                >
+                    &times;
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="noticeForm" class="space-y-4">
+                
+                <!-- Title -->
+                <div>
+                    <label for="noticeTitle" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                        Notice Title
+                    </label>
+                    <input
+                        id="noticeTitle"
+                        type="text"
+                        required
+                        placeholder="e.g. Campus Placement Drive 2026"
+                        class="form-control"
+                    >
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label for="noticeCategory" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                        Category
+                    </label>
+                    <select id="noticeCategory" class="form-control cursor-pointer">
+                        <option value="Placements">Placements</option>
+                        <option value="Exams">Exams</option>
+                        <option value="Hackathons">Hackathons</option>
+                        <option value="Cultural">Cultural</option>
+                    </select>
+                </div>
+
+                <!-- Author / Department -->
+                <div>
+                    <label for="noticeAuthor" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                        Author / Department
+                    </label>
+                    <input
+                        id="noticeAuthor"
+                        type="text"
+                        required
+                        placeholder="e.g. Training & Placement Cell"
+                        class="form-control"
+                    >
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label for="noticeDescription" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                            Description
+                        </label>
+                        <span id="characterCount" class="text-xs text-slate-400 font-mono">
+                            0 / 250
+                        </span>
+                    </div>
+
+                    <textarea
+                        id="noticeDescription"
+                        rows="4"
+                        maxlength="250"
+                        required
+                        placeholder="Enter notice details, dates, and instructions..."
+                        class="form-control resize-none"
+                    ></textarea>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="flex justify-end items-center gap-3 pt-4 border-t border-slate-100">
+                    <button
+                        id="cancelModalBtn"
+                        type="button"
+                        class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        id="modalSubmitBtn"
+                        type="submit"
+                        class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2 rounded-xl text-sm transition shadow-sm"
+                    >
+                        Publish Notice
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- 6. TOAST MESSAGE                      -->
+    <!-- ===================================== -->
+    <div
+        id="toast"
+        class="fixed bottom-5 right-5 bg-slate-900 text-white text-sm font-medium px-5 py-3 rounded-xl shadow-2xl hidden z-50 flex items-center gap-2.5 border border-slate-700"
+    >
+        <span class="text-amber-400">🔔</span>
+        <span id="toastMessage">Action completed</span>
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- 7. FOOTER                             -->
+    <!-- ===================================== -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-4 border-t border-slate-800 text-center">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p>Campus Voice &copy; 2026 Government Engineering College</p>
+            <p class="text-slate-500">Powered by Ahlya Technologies</p>
+        </div>
+    </footer>
+
+
+    <!-- ===================================== -->
+    <!-- 8. APPLICATION SCRIPT                 -->
+    <!-- ===================================== -->
+    <script src="app.js"></script>
+
+</body>
+</html>

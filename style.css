@@ -1,0 +1,117 @@
+/* =========================================
+   CAMPUS VOICE
+   Custom CSS used with Tailwind CSS
+========================================= */
+
+/* Category Filter Button */
+.filter-pill {
+    padding: 0.45rem 0.95rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    user-select: none;
+}
+
+.filter-pill:hover {
+    background-color: #e2e8f0;
+    color: #1e293b;
+    transform: translateY(-1px);
+}
+
+/* Currently Selected Category */
+.active-pill {
+    background-color: #3730a3 !important;
+    color: #ffffff !important;
+    border-color: #3730a3 !important;
+    box-shadow: 0 4px 8px rgba(55, 48, 163, 0.25);
+}
+
+/* Announcement Card */
+.notice-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.notice-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+}
+
+/* Form Controls */
+.form-control {
+    width: 100%;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.form-control:focus {
+    background-color: #ffffff;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Toast Animation */
+#toast {
+    animation: toastIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Role Visibility Classes (Strict CSS Display Control) */
+.faculty-only {
+    display: none !important;
+}
+
+body.role-faculty .faculty-only {
+    display: block !important;
+}
+
+body.role-faculty button.faculty-only {
+    display: inline-flex !important;
+}
+
+body.role-faculty div.faculty-only.flex-container {
+    display: flex !important;
+}
+
+body.role-faculty span.faculty-only {
+    display: inline-flex !important;
+}
+
+.student-only {
+    display: none !important;
+}
+
+body.role-student .student-only {
+    display: block !important;
+}
+
+body.role-student button.student-only,
+body.role-student .student-only.filter-pill {
+    display: inline-flex !important;
+}
+
+body.role-student span.student-only {
+    display: inline-flex !important;
+}
