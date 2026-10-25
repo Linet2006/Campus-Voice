@@ -448,6 +448,51 @@
         </div>
     </header>
 
+    <!-- ===================================== -->
+    <!-- 2B. NAVIGATION TABS (NOTICES / COMMUNITY) -->
+    <!-- ===================================== -->
+    <nav class="bg-brand-950 text-white border-b border-indigo-900/60 sticky top-[57px] z-30 shadow-xs">
+        <div class="max-w-6xl mx-auto px-4 flex items-center justify-between">
+            <div class="flex items-center gap-1.5 sm:gap-2 py-2">
+                <button
+                    id="tabNoticesBtn"
+                    type="button"
+                    class="nav-tab-btn active-tab px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2"
+                    title="Official college circulars and branch notices"
+                >
+                    <span>📢</span>
+                    <span>Notices</span>
+                </button>
+                <button
+                    id="tabCommunityBtn"
+                    type="button"
+                    class="nav-tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2"
+                    title="Student and faculty Q&A community"
+                >
+                    <span>💬</span>
+                    <span>Community</span>
+                </button>
+            </div>
+
+            <!-- Quick Action in Nav -->
+            <div class="py-2 flex items-center gap-2">
+                <button
+                    id="navAskQuestionBtn"
+                    type="button"
+                    class="hidden bg-accent hover:bg-amber-400 text-brand-900 font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-sm items-center gap-1.5"
+                >
+                    <span>+</span>
+                    <span>Ask Question</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+
+    <!-- ===================================== -->
+    <!-- NOTICES PAGE SECTION                  -->
+    <!-- ===================================== -->
+    <section id="noticesSection" class="w-full flex-1 flex flex-col">
 
     <!-- ===================================== -->
     <!-- 3. HERO / STATISTICS                  -->
@@ -692,6 +737,245 @@
         </div>
 
     </main>
+    </section> <!-- End of noticesSection -->
+
+
+    <!-- ===================================== -->
+    <!-- COMMUNITY Q&A PAGE SECTION            -->
+    <!-- ===================================== -->
+    <section id="communitySection" class="w-full flex-1 flex flex-col hidden">
+        
+        <!-- ===================================== -->
+        <!-- COMMUNITY HERO / METRICS              -->
+        <!-- ===================================== -->
+        <section class="bg-brand-800 text-white border-b border-indigo-700/50">
+            <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                <div>
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <span class="text-[11px] font-bold uppercase tracking-wider bg-brand-900/80 text-indigo-200 px-2.5 py-0.5 rounded-full border border-indigo-700/50">
+                            Peer &amp; Faculty Knowledge Base
+                        </span>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-bold tracking-tight">
+                        Campus Community Q&amp;A
+                    </h2>
+                    <p class="text-indigo-200 text-xs sm:text-sm mt-1 max-w-xl">
+                        Ask questions, find answers on exams, placements, and projects, and collaborate with peers and faculty members.
+                    </p>
+                </div>
+
+                <!-- Community Quick Counters -->
+                <div class="flex gap-3">
+                    <div class="bg-brand-900/70 border border-indigo-700/40 rounded-xl px-4 py-2.5 text-center min-w-[95px] shadow-sm">
+                        <span id="commTotalQuestionsCount" class="block text-2xl font-extrabold text-accent">0</span>
+                        <span class="text-[11px] text-indigo-200 font-medium">Questions</span>
+                    </div>
+
+                    <div class="bg-brand-900/70 border border-indigo-700/40 rounded-xl px-4 py-2.5 text-center min-w-[95px] shadow-sm">
+                        <span id="commResolvedQuestionsCount" class="block text-2xl font-extrabold text-emerald-400">0</span>
+                        <span class="text-[11px] text-indigo-200 font-medium">Resolved</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================== -->
+        <!-- COMMUNITY MAIN CONTENT                -->
+        <!-- ===================================== -->
+        <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full">
+
+            <!-- FACULTY DASHBOARD STRIP (FACULTY ONLY) -->
+            <div
+                id="commFacultyDashboard"
+                class="faculty-only bg-gradient-to-r from-brand-900 to-indigo-900 text-white rounded-2xl p-5 mb-6 shadow-md border border-indigo-700/50"
+            >
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 mb-3 border-b border-indigo-800/80">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        <h3 class="font-bold text-base text-white">Community Moderation Dashboard</h3>
+                        <span class="text-[10px] bg-brand-950/70 text-indigo-200 px-2 py-0.5 rounded border border-indigo-700/50">Faculty Insights</span>
+                    </div>
+                    <div class="text-xs text-indigo-300">
+                        Admin: <strong id="commDashFacultyName" class="text-amber-300 font-semibold">Faculty</strong>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                    <div class="bg-brand-950/50 rounded-xl p-3 border border-indigo-800/60">
+                        <span class="text-xs text-indigo-300 block font-medium">Total Questions</span>
+                        <span id="dashCommTotalCount" class="text-2xl font-bold text-amber-400 mt-0.5 block">0</span>
+                    </div>
+
+                    <div class="bg-brand-950/50 rounded-xl p-3 border border-indigo-800/60">
+                        <span class="text-xs text-indigo-300 block font-medium">Unanswered Questions</span>
+                        <span id="dashCommUnansweredCount" class="text-2xl font-bold text-rose-400 mt-0.5 block">0</span>
+                    </div>
+
+                    <div class="bg-brand-950/50 rounded-xl p-3 border border-indigo-800/60">
+                        <span class="text-xs text-indigo-300 block font-medium">Reported for Review (≥3 Reports)</span>
+                        <span id="dashCommReportedCount" class="text-2xl font-bold text-amber-300 mt-0.5 block">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STUDENT BRANCH FEED TOGGLE (STUDENT ONLY) -->
+            <div id="commStudentToggleContainer" class="student-only mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white border border-slate-200 rounded-2xl p-3 sm:px-4 shadow-xs">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                        Branch Scope:
+                    </span>
+                    <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+                        <button
+                            id="commFeedMyBranchBtn"
+                            type="button"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs bg-brand-600 text-white"
+                            title="Show questions for your branch and campus-wide questions"
+                        >
+                            🎯 My Branch (<span id="commFeedBranchLabel">CSE</span>) + All
+                        </button>
+                        <button
+                            id="commFeedAllBtn"
+                            type="button"
+                            class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900"
+                            title="Browse community questions across every branch"
+                        >
+                            🌐 Every Branch
+                        </button>
+                    </div>
+                </div>
+                <p id="commFeedAudienceHint" class="text-[11px] text-slate-500">
+                    Filtered for your branch and college-wide topics
+                </p>
+            </div>
+
+            <!-- SEARCH + SORT + TOPIC FILTER PILLS -->
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 sm:p-5 mb-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <!-- Search Input -->
+                    <div class="flex gap-2 w-full lg:w-5/12">
+                        <div class="relative w-full">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 text-sm">
+                                🔍
+                            </span>
+                            <input
+                                id="commSearchInput"
+                                type="text"
+                                placeholder="Search questions, details, authors..."
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition"
+                            >
+                        </div>
+                        <button
+                            id="commClearSearchBtn"
+                            type="button"
+                            class="px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-semibold hover:bg-slate-100 transition text-slate-600"
+                        >
+                            Clear
+                        </button>
+                    </div>
+
+                    <!-- Filter Controls -->
+                    <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+                        <!-- Faculty Branch Filter Dropdown -->
+                        <div class="faculty-only flex items-center gap-2">
+                            <label for="commFacultyBranchFilter" class="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                Branch:
+                            </label>
+                            <select
+                                id="commFacultyBranchFilter"
+                                class="border border-slate-200 bg-slate-50 rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer font-medium"
+                            >
+                                <option value="all">All Branches</option>
+                                <option value="CSE">CSE</option>
+                                <option value="AIML">AIML</option>
+                                <option value="ECE">ECE</option>
+                                <option value="ME">ME</option>
+                                <option value="CV">CV</option>
+                            </select>
+                        </div>
+
+                        <!-- Status Filter Dropdown -->
+                        <div class="flex items-center gap-2">
+                            <label for="commStatusFilter" class="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                Status:
+                            </label>
+                            <select
+                                id="commStatusFilter"
+                                class="border border-slate-200 bg-slate-50 rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer font-medium"
+                            >
+                                <option value="all">All Status</option>
+                                <option value="open">Open</option>
+                                <option value="answered">Answered</option>
+                                <option value="resolved">Resolved</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort Dropdown -->
+                        <div class="flex items-center gap-2">
+                            <label for="commSortSelect" class="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                Sort:
+                            </label>
+                            <select
+                                id="commSortSelect"
+                                class="border border-slate-200 bg-slate-50 rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer font-medium"
+                            >
+                                <option value="newest">Newest</option>
+                                <option value="upvotes">Most Upvoted</option>
+                                <option value="unanswered">Unanswered First</option>
+                            </select>
+                        </div>
+
+                        <!-- + Ask Question Button -->
+                        <button
+                            id="openAskQuestionBtn"
+                            type="button"
+                            class="bg-accent hover:bg-amber-400 text-brand-900 font-bold px-4 py-2 rounded-xl transition text-xs sm:text-sm shadow-sm flex items-center gap-1.5 ml-auto sm:ml-0"
+                        >
+                            <span>+</span>
+                            <span>Ask Question</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Topic Filter Pills -->
+                <div class="mt-4 pt-3.5 border-t border-slate-100 flex items-center gap-2 overflow-x-auto pb-1" id="commTopicPillsContainer">
+                    <button type="button" class="filter-pill active-pill" data-topic="all">All Topics</button>
+                    <button type="button" class="filter-pill" data-topic="Exams">📝 Exams</button>
+                    <button type="button" class="filter-pill" data-topic="Placements">💼 Placements</button>
+                    <button type="button" class="filter-pill" data-topic="Projects">💻 Projects</button>
+                    <button type="button" class="filter-pill" data-topic="Academics">📚 Academics</button>
+                    <button type="button" class="filter-pill" data-topic="Hostel & Campus">🏢 Hostel &amp; Campus</button>
+                    <button type="button" class="filter-pill" data-topic="General">🌐 General</button>
+                </div>
+            </div>
+
+            <!-- COMMUNITY QUESTIONS LIST -->
+            <div id="commQuestionsList" class="space-y-4">
+                <!-- Rendered by JavaScript -->
+            </div>
+
+            <!-- EMPTY STATE -->
+            <div
+                id="commEmptyState"
+                class="hidden text-center bg-white border border-dashed border-slate-300 rounded-2xl py-14 px-4 mt-5 shadow-xs"
+            >
+                <div class="text-4xl mb-3">💬</div>
+                <h3 id="commEmptyTitle" class="text-base sm:text-lg font-bold text-slate-700">
+                    No questions found
+                </h3>
+                <p id="commEmptyDesc" class="text-slate-500 text-xs sm:text-sm mt-1 max-w-sm mx-auto">
+                    Try adjusting your filters, or start a new discussion!
+                </p>
+                <button
+                    id="commEmptyAskBtn"
+                    type="button"
+                    class="mt-4 inline-flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition shadow-sm"
+                >
+                    + Ask a Question
+                </button>
+            </div>
+
+        </main>
+    </section>
 
 
     <!-- ===================================== -->
@@ -1211,6 +1495,435 @@
                 </div>
             </form>
 
+        </div>
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- 6B. ASK A QUESTION MODAL (COMMUNITY)  -->
+    <!-- ===================================== -->
+    <div
+        id="askQuestionModal"
+        class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto"
+    >
+        <div class="bg-white max-w-lg w-full rounded-2xl shadow-2xl border border-slate-100 p-6 my-auto max-h-[92vh] overflow-y-auto">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-lg">
+                        ❓
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">
+                            Ask a Question
+                        </h2>
+                        <p class="text-[11px] text-slate-400">
+                            Post to the college peer &amp; faculty community
+                        </p>
+                    </div>
+                </div>
+
+                <button
+                    id="closeAskModalBtn"
+                    type="button"
+                    class="text-2xl text-slate-400 hover:text-slate-700 transition leading-none px-2 py-0.5 rounded-lg hover:bg-slate-100"
+                    title="Close (Esc)"
+                >
+                    &times;
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="askQuestionForm" class="space-y-4">
+                
+                <!-- Title -->
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="askTitleInput" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                            Question Title *
+                        </label>
+                        <span id="askTitleCounter" class="text-[10px] text-slate-400">0 / 120</span>
+                    </div>
+                    <input
+                        id="askTitleInput"
+                        type="text"
+                        required
+                        maxlength="120"
+                        placeholder="e.g. What are the key topics for 5th sem DBMS practicals?"
+                        class="form-control text-xs sm:text-sm"
+                        autocomplete="off"
+                    >
+                    
+                    <!-- Live Similar Questions Suggestions -->
+                    <div id="similarQuestionsBox" class="hidden mt-2 p-3 bg-amber-50/90 border border-amber-200 rounded-xl text-xs space-y-2">
+                        <div class="flex items-center gap-1.5 font-bold text-amber-800">
+                            <span>💡</span>
+                            <span>Similar questions already asked:</span>
+                        </div>
+                        <div id="similarQuestionsList" class="space-y-1">
+                            <!-- Populated in real-time by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Details (Optional, max 1000) -->
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="askDetailsInput" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                            Details <span class="text-slate-400 font-normal lowercase">(optional)</span>
+                        </label>
+                        <span id="askDetailsCounter" class="text-[10px] text-slate-400">0 / 1000</span>
+                    </div>
+                    <textarea
+                        id="askDetailsInput"
+                        rows="4"
+                        maxlength="1000"
+                        placeholder="Provide details, background, what you have tried, or specific queries..."
+                        class="form-control text-xs sm:text-sm resize-none"
+                    ></textarea>
+                </div>
+
+                <!-- Topic & Branch Dropdowns -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label for="askTopicSelect" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                            Topic *
+                        </label>
+                        <select id="askTopicSelect" required class="form-control cursor-pointer text-xs">
+                            <option value="Exams">📝 Exams</option>
+                            <option value="Placements">💼 Placements</option>
+                            <option value="Projects">💻 Projects</option>
+                            <option value="Academics">📚 Academics</option>
+                            <option value="Hostel & Campus">🏢 Hostel &amp; Campus</option>
+                            <option value="General">🌐 General</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="askBranchSelect" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                            Branch Tag *
+                        </label>
+                        <select id="askBranchSelect" required class="form-control cursor-pointer text-xs">
+                            <option value="All">All Branches</option>
+                            <option value="CSE">CSE</option>
+                            <option value="AIML">AIML</option>
+                            <option value="ECE">ECE</option>
+                            <option value="ME">ME</option>
+                            <option value="CV">CV</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Post Anonymously Checkbox -->
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-start gap-3">
+                    <input
+                        id="askAnonymousCheck"
+                        type="checkbox"
+                        class="w-4 h-4 mt-0.5 rounded text-brand-600 focus:ring-brand-500 cursor-pointer"
+                    >
+                    <div>
+                        <label for="askAnonymousCheck" class="text-xs font-bold text-slate-800 cursor-pointer">
+                            Post anonymously
+                        </label>
+                        <p class="text-[11px] text-slate-500 leading-tight mt-0.5">
+                            Students will see &quot;Anonymous&quot;. Verified faculty will see your real name &amp; USN to keep discussions constructive and safe.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Error Alert -->
+                <div id="askQuestionError" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-2.5 font-medium"></div>
+
+                <!-- Actions -->
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button
+                        id="cancelAskModalBtn"
+                        type="button"
+                        class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        id="submitAskBtn"
+                        type="submit"
+                        class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2 rounded-xl text-xs transition shadow-sm flex items-center gap-1.5"
+                    >
+                        <span>Post Question →</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- 6C. QUESTION DETAIL VIEW MODAL        -->
+    <!-- ===================================== -->
+    <div
+        id="questionDetailModal"
+        class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto"
+    >
+        <div class="bg-white max-w-3xl w-full rounded-2xl shadow-2xl border border-slate-100 p-5 sm:p-7 my-auto max-h-[92vh] flex flex-col">
+            
+            <!-- Modal Header Navigation -->
+            <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 flex-shrink-0">
+                <button
+                    id="backToCommunityBtn"
+                    type="button"
+                    class="flex items-center gap-1.5 text-xs font-bold text-brand-600 hover:text-brand-800 transition"
+                >
+                    <span>←</span>
+                    <span>Back to Questions</span>
+                </button>
+
+                <button
+                    id="closeQuestionDetailBtn"
+                    type="button"
+                    class="text-2xl text-slate-400 hover:text-slate-700 transition leading-none px-2 py-0.5 rounded-lg hover:bg-slate-100"
+                    title="Close (Esc)"
+                >
+                    &times;
+                </button>
+            </div>
+
+            <!-- Scrollable Content Body -->
+            <div class="overflow-y-auto flex-1 pr-1 space-y-6" id="questionDetailBody">
+                
+                <!-- Main Question Content (Rendered by JS) -->
+                <div id="questionDetailContent">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <!-- Answers Header & List -->
+                <div class="border-t border-slate-200 pt-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <span>💬 Answers</span>
+                            <span id="detailAnswersCount" class="text-xs bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full font-bold">0</span>
+                        </h3>
+                        <span class="text-[11px] text-slate-400 hidden sm:inline">
+                            Accepted answer first &bull; Sorted by upvotes
+                        </span>
+                    </div>
+
+                    <!-- Answers Cards Container -->
+                    <div id="detailAnswersList" class="space-y-4">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Add Your Answer Form Box -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 mt-6">
+                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                        <span>✏️</span> Add Your Answer
+                    </h4>
+
+                    <form id="addAnswerForm" class="space-y-3">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[11px] text-slate-500">Share knowledge, verify facts, or offer solutions</span>
+                                <span id="answerCharCounter" class="text-[10px] text-slate-400">0 / 1000</span>
+                            </div>
+                            <textarea
+                                id="answerTextInput"
+                                required
+                                rows="3"
+                                maxlength="1000"
+                                placeholder="Write your answer clearly..."
+                                class="form-control text-xs sm:text-sm resize-none bg-white"
+                            ></textarea>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input
+                                    id="answerAnonymousCheck"
+                                    type="checkbox"
+                                    class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500"
+                                >
+                                <span class="text-xs text-slate-600 font-medium">Answer anonymously (Real author visible to faculty)</span>
+                            </label>
+
+                            <button
+                                id="submitAnswerBtn"
+                                type="submit"
+                                class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-1.5"
+                            >
+                                <span>Post Answer</span>
+                            </button>
+                        </div>
+
+                        <div id="addAnswerError" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-2.5 font-medium"></div>
+                    </form>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- 6D. EDIT QUESTION MODAL               -->
+    <!-- ===================================== -->
+    <div
+        id="editQuestionModal"
+        class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto"
+    >
+        <div class="bg-white max-w-lg w-full rounded-2xl shadow-2xl border border-slate-100 p-6 my-auto max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <h2 class="text-lg font-bold text-slate-900">Edit Question</h2>
+                <button
+                    id="closeEditQuestionBtn"
+                    type="button"
+                    class="text-2xl text-slate-400 hover:text-slate-700 transition leading-none px-2 py-0.5 rounded-lg hover:bg-slate-100"
+                >
+                    &times;
+                </button>
+            </div>
+
+            <form id="editQuestionForm" class="space-y-4">
+                <input type="hidden" id="editQuestionId">
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="editQuestionTitleInput" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                            Question Title *
+                        </label>
+                        <span id="editQuestionTitleCounter" class="text-[10px] text-slate-400">0 / 120</span>
+                    </div>
+                    <input
+                        id="editQuestionTitleInput"
+                        type="text"
+                        required
+                        maxlength="120"
+                        class="form-control text-xs sm:text-sm"
+                    >
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="editQuestionDetailsInput" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                            Details (optional)
+                        </label>
+                        <span id="editQuestionDetailsCounter" class="text-[10px] text-slate-400">0 / 1000</span>
+                    </div>
+                    <textarea
+                        id="editQuestionDetailsInput"
+                        rows="4"
+                        maxlength="1000"
+                        class="form-control text-xs sm:text-sm resize-none"
+                    ></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label for="editQuestionTopicSelect" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                            Topic *
+                        </label>
+                        <select id="editQuestionTopicSelect" required class="form-control cursor-pointer text-xs">
+                            <option value="Exams">📝 Exams</option>
+                            <option value="Placements">💼 Placements</option>
+                            <option value="Projects">💻 Projects</option>
+                            <option value="Academics">📚 Academics</option>
+                            <option value="Hostel & Campus">🏢 Hostel &amp; Campus</option>
+                            <option value="General">🌐 General</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="editQuestionBranchSelect" class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                            Branch Tag *
+                        </label>
+                        <select id="editQuestionBranchSelect" required class="form-control cursor-pointer text-xs">
+                            <option value="All">All Branches</option>
+                            <option value="CSE">CSE</option>
+                            <option value="AIML">AIML</option>
+                            <option value="ECE">ECE</option>
+                            <option value="ME">ME</option>
+                            <option value="CV">CV</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="editQuestionError" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-2.5 font-medium"></div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button
+                        id="cancelEditQuestionBtn"
+                        type="button"
+                        class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2 rounded-xl text-xs transition shadow-sm"
+                    >
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ===================================== -->
+    <!-- 6E. EDIT ANSWER MODAL                 -->
+    <!-- ===================================== -->
+    <div
+        id="editAnswerModal"
+        class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto"
+    >
+        <div class="bg-white max-w-lg w-full rounded-2xl shadow-2xl border border-slate-100 p-6 my-auto max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <h2 class="text-lg font-bold text-slate-900">Edit Answer</h2>
+                <button
+                    id="closeEditAnswerBtn"
+                    type="button"
+                    class="text-2xl text-slate-400 hover:text-slate-700 transition leading-none px-2 py-0.5 rounded-lg hover:bg-slate-100"
+                >
+                    &times;
+                </button>
+            </div>
+
+            <form id="editAnswerForm" class="space-y-4">
+                <input type="hidden" id="editAnswerId">
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="editAnswerTextInput" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                            Answer Text *
+                        </label>
+                        <span id="editAnswerCharCounter" class="text-[10px] text-slate-400">0 / 1000</span>
+                    </div>
+                    <textarea
+                        id="editAnswerTextInput"
+                        rows="4"
+                        required
+                        maxlength="1000"
+                        class="form-control text-xs sm:text-sm resize-none"
+                    ></textarea>
+                </div>
+
+                <div id="editAnswerError" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-2.5 font-medium"></div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button
+                        id="cancelEditAnswerBtn"
+                        type="button"
+                        class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2 rounded-xl text-xs transition shadow-sm"
+                    >
+                        Save Answer
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

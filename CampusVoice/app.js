@@ -909,7 +909,12 @@ function applyRole() {
         if (studentFeedToggleContainer) studentFeedToggleContainer.classList.remove("hidden");
     }
 
-    renderNotices();
+    updateCommunityRoleUI();
+    if (typeof currentMainTab !== "undefined" && currentMainTab === "community") {
+        renderCommunityFeed();
+    } else {
+        renderNotices();
+    }
 }
 
 function updateStudentFeedToggleUI() {
@@ -2906,23 +2911,2085 @@ function showToast(message) {
 
 
 // ==================================================
+// 23B. COMMUNITY Q&A MODULE (REDDIT / STACKOVERFLOW STYLE)
+// ==================================================
+
+/* ==========================================================================
+   COMMUNITY DATA LAYER MODULE
+   --------------------------------------------------------------------------
+   NOTE ON STORAGE & MULTI-DEVICE ARCHITECTURE:
+   `localStorage` is strictly scoped per-browser profile (e.g. Chrome's storage
+   sandbox is isolated from Microsoft Edge). For a real multi-device production
+   system with thousands of students, a shared cloud database such as Firebase
+   Firestore, Supabase, or a centralized Node.js/PostgreSQL backend is needed.
+   
+   To maintain clean architecture and zero-downtime upgradability, the UI calls
+   ONLY these asynchronous functions and NEVER accesses `localStorage` directly!
+   This permits replacing this data layer with Firebase Firestore sdk calls with
+   no changes to the UI components.
+   ========================================================================== */
+
+const defaultSeedQuestions = [
+    {
+        id: 1792945000001,
+        title: "What are the core technical rounds asked in Ahlya Technologies campus drive?",
+        details: "Can seniors share what topics to focus on? Is it primarily DSA and system design, or do they ask deep questions on OS and DBMS?",
+        topic: "Placements",
+        branch: "CSE",
+        authorUsn: "1GE22CS045",
+        authorName: "Aditya Sharma",
+        isFaculty: false,
+        anonymous: false,
+        createdAt: "2026-10-24T10:30:00.000Z",
+        status: "resolved",
+        acceptedAnswerId: 1792945100001,
+        upvotes: 14,
+        upvotedBy: ["1GE22AI012", "1GE22CS089"],
+        reports: [],
+        pinned: true
+    },
+    {
+        id: 1792945000002,
+        title: "Best datasets and frameworks for 5th semester Computer Vision mini-project?",
+        details: "Our team is planning to build a real-time sign language interpreter using OpenCV and PyTorch. Would Kaggle datasets be sufficient or do we need to capture our own video data?",
+        topic: "Projects",
+        branch: "AIML",
+        authorUsn: "1GE22AI012",
+        authorName: "Pooja Hegde",
+        isFaculty: false,
+        anonymous: false,
+        createdAt: "2026-10-24T14:15:00.000Z",
+        status: "answered",
+        acceptedAnswerId: null,
+        upvotes: 9,
+        upvotedBy: ["1GE22CS045"],
+        reports: [],
+        pinned: false
+    },
+    {
+        id: 1792945000003,
+        title: "VTU Odd Semester Practical and Theory exam schedule clarification",
+        details: "Has the official circular for 5th sem lab examination dates been released by the exam section? Some circulars circulating on WhatsApp mention Nov 15th.",
+        topic: "Exams",
+        branch: "All",
+        authorUsn: "1GE22ME019",
+        authorName: "Karthik Nair",
+        isFaculty: false,
+        anonymous: true,
+        createdAt: "2026-10-25T08:00:00.000Z",
+        status: "answered",
+        acceptedAnswerId: null,
+        upvotes: 21,
+        upvotedBy: ["1GE22CS045", "1GE22AI012"],
+        reports: [],
+        pinned: true
+    },
+    {
+        id: 1792945000004,
+        title: "Availability of Microcontroller STM32 development boards in department library",
+        details: "Do we need a faculty permission slip to issue the STM32 kits for the Embedded Systems course, or can we issue them directly with our college ID card?",
+        topic: "Academics",
+        branch: "ECE",
+        authorUsn: "1GE22EC055",
+        authorName: "Suresh Kumar",
+        isFaculty: false,
+        anonymous: false,
+        createdAt: "2026-10-25T11:20:00.000Z",
+        status: "open",
+        acceptedAnswerId: null,
+        upvotes: 5,
+        upvotedBy: [],
+        reports: [],
+        pinned: false
+    }
+];
+
+const defaultSeedAnswers = [
+    {
+        id: 1792945100001,
+        questionId: 1792945000001,
+        text: "Focus heavily on Data Structures (Trees, Graphs, Hash Maps), SQL queries, and Object-Oriented Programming. They also emphasize clean coding and explaining your thought process during problem solving.",
+        authorUsn: "FACULTY_CSE",
+        authorName: "Dr. Ramesh (CSE Dept)",
+        isFaculty: true,
+        anonymous: false,
+        createdAt: "2026-10-24T12:00:00.000Z",
+        upvotes: 18,
+        upvotedBy: ["1GE22CS045", "1GE22AI012"],
+        reports: []
+    },
+    {
+        id: 1792945100002,
+        questionId: 1792945000001,
+        text: "Also review your 4th sem DBMS mini-project! In my round, they asked me to write SQL join queries on paper.",
+        authorUsn: "1GE22CS089",
+        authorName: "Kavya Rao",
+        isFaculty: false,
+        anonymous: false,
+        createdAt: "2026-10-24T15:45:00.000Z",
+        upvotes: 7,
+        upvotedBy: [],
+        reports: []
+    },
+    {
+        id: 1792945100003,
+        questionId: 1792945000002,
+        text: "We used the ASL Alphabet dataset from Kaggle last semester along with MediaPipe for hand landmark detection. It runs in real-time even on standard laptop CPUs!",
+        authorUsn: "1GE22AI034",
+        authorName: "Rahul Verma",
+        isFaculty: false,
+        anonymous: false,
+        createdAt: "2026-10-24T16:20:00.000Z",
+        upvotes: 11,
+        upvotedBy: ["1GE22AI012"],
+        reports: []
+    },
+    {
+        id: 1792945100004,
+        questionId: 1792945000003,
+        text: "Please refer only to the official notices published here on Campus Voice. The lab examinations will commence from Nov 22nd. An official departmental circular will be uploaded by tomorrow.",
+        authorUsn: "FACULTY_CSE",
+        authorName: "Dr. Ramesh (CSE Dept)",
+        isFaculty: true,
+        anonymous: false,
+        createdAt: "2026-10-25T09:10:00.000Z",
+        upvotes: 25,
+        upvotedBy: ["1GE22CS045", "1GE22ME019"],
+        reports: []
+    }
+];
+
+const CommunityData = {
+    async getQuestions() {
+        try {
+            const raw = localStorage.getItem("campusQuestions");
+            let questions = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(questions)) questions = [];
+            return questions;
+        } catch (e) {
+            console.error("Error reading campusQuestions:", e);
+            return [];
+        }
+    },
+
+    async saveQuestion(q) {
+        const session = getSession();
+        if (!session) {
+            throw new Error("Authentication required. Please log in to post a question.");
+        }
+
+        if (!q || !q.title || !q.title.trim()) {
+            throw new Error("Question title cannot be empty or whitespace.");
+        }
+
+        if (q.title.trim().length > 120) {
+            throw new Error("Question title must be 120 characters or less.");
+        }
+
+        if (q.details && q.details.trim().length > 1000) {
+            throw new Error("Question details must be 1000 characters or less.");
+        }
+
+        // Spam Guard: Limit 1 new question per minute per user
+        const userKey = session.usn || session.name || "user";
+        const lastPostKey = "campus_last_question_" + userKey;
+        const lastPostTime = parseInt(localStorage.getItem(lastPostKey) || "0", 10);
+        const now = Date.now();
+        if (now - lastPostTime < 60000) {
+            const waitSec = Math.ceil((60000 - (now - lastPostTime)) / 1000);
+            throw new Error(`Spam guard active: Please wait ${waitSec}s before posting another question.`);
+        }
+
+        const questions = await this.getQuestions();
+        const newQuestion = {
+            id: Date.now(),
+            title: q.title.trim(),
+            details: (q.details || "").trim(),
+            topic: q.topic || "General",
+            branch: q.branch || (session.branch || "All"),
+            authorUsn: session.usn || (session.role === "faculty" ? "FACULTY" : "ANON"),
+            authorName: session.name || "Community Member",
+            isFaculty: session.role === "faculty",
+            anonymous: Boolean(q.anonymous),
+            createdAt: new Date().toISOString(),
+            status: "open",
+            acceptedAnswerId: null,
+            upvotes: 0,
+            upvotedBy: [],
+            reports: [],
+            pinned: false
+        };
+
+        questions.unshift(newQuestion);
+        localStorage.setItem("campusQuestions", JSON.stringify(questions));
+        localStorage.setItem(lastPostKey, String(now));
+
+        // Background server sync for cross-browser testing (Chrome / Edge)
+        try {
+            fetch("/api/questions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(questions)
+            }).catch(function () {});
+        } catch (e) {}
+
+        return newQuestion;
+    },
+
+    async getAnswers(qid) {
+        try {
+            const raw = localStorage.getItem("campusAnswers");
+            let answers = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(answers)) answers = [];
+            if (qid !== undefined && qid !== null) {
+                return answers.filter(function (a) { return String(a.questionId) === String(qid); });
+            }
+            return answers;
+        } catch (e) {
+            console.error("Error reading campusAnswers:", e);
+            return [];
+        }
+    },
+
+    async saveAnswer(a) {
+        const session = getSession();
+        if (!session) {
+            throw new Error("Authentication required. Please log in to post an answer.");
+        }
+
+        if (!a || !a.text || !a.text.trim()) {
+            throw new Error("Answer text cannot be empty or whitespace.");
+        }
+
+        if (a.text.trim().length > 1000) {
+            throw new Error("Answer text must be 1000 characters or less.");
+        }
+
+        if (!a.questionId) {
+            throw new Error("Valid question ID is required to post an answer.");
+        }
+
+        const answersRaw = localStorage.getItem("campusAnswers");
+        let answers = answersRaw ? JSON.parse(answersRaw) : [];
+        if (!Array.isArray(answers)) answers = [];
+
+        const newAnswer = {
+            id: Date.now(),
+            questionId: a.questionId,
+            text: a.text.trim(),
+            authorUsn: session.usn || (session.role === "faculty" ? "FACULTY" : "ANON"),
+            authorName: session.name || "Community Member",
+            isFaculty: session.role === "faculty",
+            anonymous: Boolean(a.anonymous),
+            createdAt: new Date().toISOString(),
+            upvotes: 0,
+            upvotedBy: [],
+            reports: []
+        };
+
+        answers.push(newAnswer);
+        localStorage.setItem("campusAnswers", JSON.stringify(answers));
+
+        // Automatically mark question as "answered" when it receives its first answer
+        const questions = await this.getQuestions();
+        const question = questions.find(function (q) { return String(q.id) === String(a.questionId); });
+        if (question && question.status === "open") {
+            question.status = "answered";
+            localStorage.setItem("campusQuestions", JSON.stringify(questions));
+        }
+
+        // Background server sync
+        try {
+            fetch("/api/answers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(answers)
+            }).catch(function () {});
+            if (question) {
+                fetch("/api/questions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(questions)
+                }).catch(function () {});
+            }
+        } catch (e) {}
+
+        return newAnswer;
+    },
+
+    async updateQuestion(id, changes) {
+        const session = getSession();
+        if (!session) {
+            throw new Error("Authentication required.");
+        }
+
+        const questions = await this.getQuestions();
+        const idx = questions.findIndex(function (q) { return String(q.id) === String(id); });
+        if (idx === -1) {
+            throw new Error("Question not found.");
+        }
+
+        const question = questions[idx];
+        const isAuthor = (session.usn && session.usn.toUpperCase() === (question.authorUsn || "").toUpperCase()) ||
+                         (session.name && session.name === question.authorName);
+        const isFaculty = session.role === "faculty";
+
+        // Permission: content edit by author only
+        if (changes.title !== undefined || changes.details !== undefined || changes.topic !== undefined || changes.branch !== undefined) {
+            if (!isAuthor) {
+                throw new Error("Permission denied: Only the question author can edit question content.");
+            }
+        }
+
+        // Permission: Pin / Unpin by faculty only
+        if (changes.pinned !== undefined && !isFaculty) {
+            throw new Error("Permission denied: Only faculty can pin or unpin questions.");
+        }
+
+        // Permission: Accepted answer by author only
+        if (changes.acceptedAnswerId !== undefined && !isAuthor) {
+            throw new Error("Permission denied: Only the question author can mark an accepted answer.");
+        }
+
+        Object.assign(question, changes);
+        questions[idx] = question;
+        localStorage.setItem("campusQuestions", JSON.stringify(questions));
+
+        try {
+            fetch("/api/questions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(questions)
+            }).catch(function () {});
+        } catch (e) {}
+
+        return question;
+    },
+
+    async deleteQuestion(id) {
+        const session = getSession();
+        if (!session) {
+            throw new Error("Authentication required.");
+        }
+
+        const questions = await this.getQuestions();
+        const question = questions.find(function (q) { return String(q.id) === String(id); });
+        if (!question) {
+            throw new Error("Question not found.");
+        }
+
+        const isAuthor = (session.usn && session.usn.toUpperCase() === (question.authorUsn || "").toUpperCase()) ||
+                         (session.name && session.name === question.authorName);
+        const isFaculty = session.role === "faculty";
+
+        if (!isAuthor && !isFaculty) {
+            throw new Error("Permission denied: Only the question author or faculty can delete this question.");
+        }
+
+        const remainingQuestions = questions.filter(function (q) { return String(q.id) !== String(id); });
+        localStorage.setItem("campusQuestions", JSON.stringify(remainingQuestions));
+
+        // Cascade delete answers for this question
+        const answersRaw = localStorage.getItem("campusAnswers");
+        let answers = answersRaw ? JSON.parse(answersRaw) : [];
+        const remainingAnswers = answers.filter(function (a) { return String(a.questionId) !== String(id); });
+        localStorage.setItem("campusAnswers", JSON.stringify(remainingAnswers));
+
+        try {
+            fetch("/api/questions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(remainingQuestions)
+            }).catch(function () {});
+            fetch("/api/answers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(remainingAnswers)
+            }).catch(function () {});
+        } catch (e) {}
+
+        return true;
+    },
+
+    async deleteAnswer(id) {
+        const session = getSession();
+        if (!session) {
+            throw new Error("Authentication required.");
+        }
+
+        const answersRaw = localStorage.getItem("campusAnswers");
+        let answers = answersRaw ? JSON.parse(answersRaw) : [];
+        const answer = answers.find(function (a) { return String(a.id) === String(id); });
+        if (!answer) {
+            throw new Error("Answer not found.");
+        }
+
+        const isAuthor = (session.usn && session.usn.toUpperCase() === (answer.authorUsn || "").toUpperCase()) ||
+                         (session.name && session.name === answer.authorName);
+        const isFaculty = session.role === "faculty";
+
+        if (!isAuthor && !isFaculty) {
+            throw new Error("Permission denied: Only the author or faculty can delete this answer.");
+        }
+
+        const remainingAnswers = answers.filter(function (a) { return String(a.id) !== String(id); });
+        localStorage.setItem("campusAnswers", JSON.stringify(remainingAnswers));
+
+        // Check if question's accepted answer was removed, and update status if 0 answers left
+        const questions = await this.getQuestions();
+        const question = questions.find(function (q) { return String(q.id) === String(answer.questionId); });
+        if (question) {
+            if (String(question.acceptedAnswerId) === String(id)) {
+                question.acceptedAnswerId = null;
+            }
+            const qAnswersRemaining = remainingAnswers.filter(function (a) { return String(a.questionId) === String(question.id); });
+            if (qAnswersRemaining.length === 0) {
+                question.status = "open";
+            } else if (!question.acceptedAnswerId) {
+                question.status = "answered";
+            }
+            localStorage.setItem("campusQuestions", JSON.stringify(questions));
+        }
+
+        try {
+            fetch("/api/answers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(remainingAnswers)
+            }).catch(function () {});
+            if (question) {
+                fetch("/api/questions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(questions)
+                }).catch(function () {});
+            }
+        } catch (e) {}
+
+        return true;
+    },
+
+    async updateAnswer(id, newText) {
+        const session = getSession();
+        if (!session) {
+            throw new Error("Authentication required.");
+        }
+
+        if (!newText || !newText.trim()) {
+            throw new Error("Answer text cannot be empty or whitespace.");
+        }
+
+        if (newText.trim().length > 1000) {
+            throw new Error("Answer text must be 1000 characters or less.");
+        }
+
+        const answersRaw = localStorage.getItem("campusAnswers");
+        let answers = answersRaw ? JSON.parse(answersRaw) : [];
+        const answer = answers.find(function (a) { return String(a.id) === String(id); });
+        if (!answer) {
+            throw new Error("Answer not found.");
+        }
+
+        const isAuthor = (session.usn && session.usn.toUpperCase() === (answer.authorUsn || "").toUpperCase()) ||
+                         (session.name && session.name === answer.authorName);
+        if (!isAuthor) {
+            throw new Error("Permission denied: Only the author can edit this answer.");
+        }
+
+        answer.text = newText.trim();
+        localStorage.setItem("campusAnswers", JSON.stringify(answers));
+
+        try {
+            fetch("/api/answers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(answers)
+            }).catch(function () {});
+        } catch (e) {}
+
+        return answer;
+    },
+
+    async addReport(type, id, userIdentifier) {
+        const session = getSession();
+        if (!session) {
+            throw new Error("Authentication required to report content.");
+        }
+
+        const identifier = userIdentifier || session.usn || session.name || "user";
+
+        if (type === "question") {
+            const questions = await this.getQuestions();
+            const question = questions.find(function (q) { return String(q.id) === String(id); });
+            if (!question) throw new Error("Question not found.");
+
+            if (!Array.isArray(question.reports)) question.reports = [];
+            if (question.reports.includes(identifier)) {
+                return { success: false, message: "You have already reported this question." };
+            }
+
+            question.reports.push(identifier);
+            localStorage.setItem("campusQuestions", JSON.stringify(questions));
+
+            try {
+                fetch("/api/questions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(questions)
+                }).catch(function () {});
+            } catch (e) {}
+
+            return { success: true, count: question.reports.length };
+
+        } else if (type === "answer") {
+            const answersRaw = localStorage.getItem("campusAnswers");
+            let answers = answersRaw ? JSON.parse(answersRaw) : [];
+            const answer = answers.find(function (a) { return String(a.id) === String(id); });
+            if (!answer) throw new Error("Answer not found.");
+
+            if (!Array.isArray(answer.reports)) answer.reports = [];
+            if (answer.reports.includes(identifier)) {
+                return { success: false, message: "You have already reported this answer." };
+            }
+
+            answer.reports.push(identifier);
+            localStorage.setItem("campusAnswers", JSON.stringify(answers));
+
+            try {
+                fetch("/api/answers", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(answers)
+                }).catch(function () {});
+            } catch (e) {}
+
+            return { success: true, count: answer.reports.length };
+        } else {
+            throw new Error("Invalid report target type.");
+        }
+    },
+
+    async restoreItem(type, id) {
+        const session = getSession();
+        if (!session || session.role !== "faculty") {
+            throw new Error("Permission denied: Only faculty can restore reported items.");
+        }
+
+        if (type === "question") {
+            const questions = await this.getQuestions();
+            const question = questions.find(function (q) { return String(q.id) === String(id); });
+            if (question) {
+                question.reports = [];
+                localStorage.setItem("campusQuestions", JSON.stringify(questions));
+                try {
+                    fetch("/api/questions", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(questions)
+                    }).catch(function () {});
+                } catch (e) {}
+            }
+        } else if (type === "answer") {
+            const answersRaw = localStorage.getItem("campusAnswers");
+            let answers = answersRaw ? JSON.parse(answersRaw) : [];
+            const answer = answers.find(function (a) { return String(a.id) === String(id); });
+            if (answer) {
+                answer.reports = [];
+                localStorage.setItem("campusAnswers", JSON.stringify(answers));
+                try {
+                    fetch("/api/answers", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(answers)
+                    }).catch(function () {});
+                } catch (e) {}
+            }
+        }
+        return true;
+    },
+
+    async toggleUpvoteQuestion(id) {
+        const session = getSession();
+        if (!session) {
+            throw new Error("Please log in to upvote questions.");
+        }
+        const userIdentifier = session.usn || session.name;
+
+        const questions = await this.getQuestions();
+        const question = questions.find(function (q) { return String(q.id) === String(id); });
+        if (!question) throw new Error("Question not found.");
+
+        const isAuthor = (session.usn && session.usn.toUpperCase() === (question.authorUsn || "").toUpperCase()) ||
+                         (session.name && session.name === question.authorName);
+        if (isAuthor) {
+            throw new Error("You cannot upvote your own question.");
+        }
+
+        if (!Array.isArray(question.upvotedBy)) question.upvotedBy = [];
+        const idx = question.upvotedBy.indexOf(userIdentifier);
+        if (idx > -1) {
+            question.upvotedBy.splice(idx, 1);
+            question.upvotes = Math.max(0, (question.upvotes || 1) - 1);
+        } else {
+            question.upvotedBy.push(userIdentifier);
+            question.upvotes = (question.upvotes || 0) + 1;
+        }
+
+        localStorage.setItem("campusQuestions", JSON.stringify(questions));
+        try {
+            fetch("/api/questions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(questions)
+            }).catch(function () {});
+        } catch (e) {}
+
+        return { upvotes: question.upvotes, hasUpvoted: idx === -1 };
+    },
+
+    async toggleUpvoteAnswer(id) {
+        const session = getSession();
+        if (!session) {
+            throw new Error("Please log in to upvote answers.");
+        }
+        const userIdentifier = session.usn || session.name;
+
+        const answersRaw = localStorage.getItem("campusAnswers");
+        let answers = answersRaw ? JSON.parse(answersRaw) : [];
+        const answer = answers.find(function (a) { return String(a.id) === String(id); });
+        if (!answer) throw new Error("Answer not found.");
+
+        const isAuthor = (session.usn && session.usn.toUpperCase() === (answer.authorUsn || "").toUpperCase()) ||
+                         (session.name && session.name === answer.authorName);
+        if (isAuthor) {
+            throw new Error("You cannot upvote your own answer.");
+        }
+
+        if (!Array.isArray(answer.upvotedBy)) answer.upvotedBy = [];
+        const idx = answer.upvotedBy.indexOf(userIdentifier);
+        if (idx > -1) {
+            answer.upvotedBy.splice(idx, 1);
+            answer.upvotes = Math.max(0, (answer.upvotes || 1) - 1);
+        } else {
+            answer.upvotedBy.push(userIdentifier);
+            answer.upvotes = (answer.upvotes || 0) + 1;
+        }
+
+        localStorage.setItem("campusAnswers", JSON.stringify(answers));
+        try {
+            fetch("/api/answers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(answers)
+            }).catch(function () {});
+        } catch (e) {}
+
+    }
+};
+
+if (typeof window !== "undefined") {
+    window.CommunityData = CommunityData;
+}
+
+
+// ==================================================
+// COMMUNITY STATE & HELPERS
+// ==================================================
+
+let currentMainTab = localStorage.getItem("campusActiveTab") || "notices";
+let commSearchText = "";
+let commCurrentTopic = "all";
+let commCurrentStatus = "all";
+let commCurrentSort = "newest";
+let commFacultyBranch = "all";
+let commStudentFeedMode = "my-branch";
+let currentActiveQuestionId = null;
+
+// Seed Data initialization on first load
+async function initCommunityData() {
+    const rawQ = localStorage.getItem("campusQuestions");
+    if (!rawQ) {
+        localStorage.setItem("campusQuestions", JSON.stringify(defaultSeedQuestions));
+        try {
+            fetch("/api/questions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(defaultSeedQuestions)
+            }).catch(function () {});
+        } catch (e) {}
+    }
+
+    const rawA = localStorage.getItem("campusAnswers");
+    if (!rawA) {
+        localStorage.setItem("campusAnswers", JSON.stringify(defaultSeedAnswers));
+        try {
+            fetch("/api/answers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(defaultSeedAnswers)
+            }).catch(function () {});
+        } catch (e) {}
+    }
+}
+
+// Background sync from server (allows Chrome & Edge instant sync)
+async function syncCommunityFromServer() {
+    try {
+        const respQ = await fetch("/api/questions");
+        if (respQ.ok) {
+            const serverQuestions = await respQ.json();
+            if (Array.isArray(serverQuestions) && serverQuestions.length > 0) {
+                const localQ = await CommunityData.getQuestions();
+                if (localQ.length === 0 || JSON.stringify(serverQuestions) !== JSON.stringify(localQ)) {
+                    localStorage.setItem("campusQuestions", JSON.stringify(serverQuestions));
+                    if (currentMainTab === "community") renderCommunityFeed();
+                }
+            }
+        }
+        const respA = await fetch("/api/answers");
+        if (respA.ok) {
+            const serverAnswers = await respA.json();
+            if (Array.isArray(serverAnswers) && serverAnswers.length > 0) {
+                const localA = await CommunityData.getAnswers();
+                if (localA.length === 0 || JSON.stringify(serverAnswers) !== JSON.stringify(localA)) {
+                    localStorage.setItem("campusAnswers", JSON.stringify(serverAnswers));
+                    if (currentActiveQuestionId) {
+                        openQuestionDetail(currentActiveQuestionId);
+                    }
+                }
+            }
+        }
+    } catch (e) {}
+}
+
+function formatTimeAgo(isoString) {
+    if (!isoString) return "Recently";
+    const then = new Date(isoString).getTime();
+    const now = Date.now();
+    const diff = Math.max(0, now - then);
+    const sec = Math.floor(diff / 1000);
+    if (sec < 60) return "Just now";
+    const min = Math.floor(sec / 60);
+    if (min < 60) return min === 1 ? "1 min ago" : `${min} mins ago`;
+    const hours = Math.floor(min / 60);
+    if (hours < 24) return hours === 1 ? "1 hr ago" : `${hours} hrs ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return "Yesterday";
+    if (days < 30) return `${days} days ago`;
+    return new Date(isoString).toLocaleDateString();
+}
+
+function getTopicBadgeClass(topic) {
+    switch ((topic || "").toLowerCase()) {
+        case "exams": return "badge-topic-exams";
+        case "placements": return "badge-topic-placements";
+        case "projects": return "badge-topic-projects";
+        case "academics": return "badge-topic-academics";
+        case "hostel & campus":
+        case "hostel": return "badge-topic-hostel";
+        default: return "badge-topic-general";
+    }
+}
+
+function formatAuthorDisplay(item, currentSession) {
+    const isFacultyUser = currentSession && currentSession.role === "faculty";
+    if (item.isFaculty) {
+        return `<span class="inline-flex items-center gap-1 font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 text-[11px]"><span>🎓</span> ${escapeHtml(item.authorName)} <span class="text-[9px] uppercase tracking-wider bg-amber-200 text-amber-900 px-1 py-0.2 rounded font-extrabold">Faculty</span></span>`;
+    }
+
+    if (item.anonymous) {
+        if (isFacultyUser) {
+            return `<span class="inline-flex items-center gap-1 text-slate-700 font-medium text-xs"><span>🎭</span> <em>Anonymous</em> <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200" title="Only faculty can view real student authors">Real: ${escapeHtml(item.authorName)} &middot; <span class="font-mono">${escapeHtml(item.authorUsn || "")}</span></span></span>`;
+        } else {
+            return `<span class="inline-flex items-center gap-1 text-slate-600 font-medium text-xs"><span>🎭</span> <em>Anonymous</em></span>`;
+        }
+    }
+
+    return `<span class="font-semibold text-slate-800 text-xs">${escapeHtml(item.authorName)}</span> <span class="text-slate-400 font-normal text-[11px]">&middot; ${escapeHtml(item.authorUsn || "")}</span>`;
+}
+
+function findSimilarQuestions(inputTitle, allQuestions) {
+    if (!inputTitle || inputTitle.trim().length < 3) return [];
+    const stopWords = new Set(["what", "which", "where", "when", "how", "why", "who", "the", "and", "for", "with", "are", "can", "is", "in", "to", "of", "a", "an", "on", "do", "does", "any", "some", "our", "we"]);
+    const inputWords = inputTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .split(/\s+/)
+        .filter(function (w) { return w.length >= 3 && !stopWords.has(w); });
+
+    if (inputWords.length === 0) return [];
+
+    const scored = [];
+    allQuestions.forEach(function (q) {
+        const qWords = q.title
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, " ")
+            .split(/\s+/)
+            .filter(function (w) { return w.length >= 3 && !stopWords.has(w); });
+
+        let matchCount = 0;
+        inputWords.forEach(function (w) {
+            if (qWords.some(function (qw) { return qw.includes(w) || w.includes(qw); })) {
+                matchCount++;
+            }
+        });
+
+        if (matchCount > 0) {
+            scored.push({ question: q, score: matchCount });
+        }
+    });
+
+    scored.sort(function (a, b) { return b.score - a.score; });
+    return scored.slice(0, 3).map(function (s) { return s.question; });
+}
+
+
+// ==================================================
+// COMMUNITY TAB SWITCHING & ROLE UI
+// ==================================================
+
+function switchMainTab(tabName) {
+    currentMainTab = tabName;
+    localStorage.setItem("campusActiveTab", tabName);
+
+    const noticesSection = document.getElementById("noticesSection");
+    const communitySection = document.getElementById("communitySection");
+    const tabNoticesBtn = document.getElementById("tabNoticesBtn");
+    const tabCommunityBtn = document.getElementById("tabCommunityBtn");
+    const navAskQuestionBtn = document.getElementById("navAskQuestionBtn");
+
+    if (tabName === "community") {
+        if (noticesSection) noticesSection.classList.add("hidden");
+        if (communitySection) communitySection.classList.remove("hidden");
+        if (tabCommunityBtn) tabCommunityBtn.classList.add("active-tab");
+        if (tabNoticesBtn) tabNoticesBtn.classList.remove("active-tab");
+        if (navAskQuestionBtn) navAskQuestionBtn.classList.remove("hidden");
+        renderCommunityFeed();
+    } else {
+        if (communitySection) communitySection.classList.add("hidden");
+        if (noticesSection) noticesSection.classList.remove("hidden");
+        if (tabNoticesBtn) tabNoticesBtn.classList.add("active-tab");
+        if (tabCommunityBtn) tabCommunityBtn.classList.remove("active-tab");
+        if (navAskQuestionBtn) navAskQuestionBtn.classList.add("hidden");
+        renderNotices();
+    }
+}
+
+function updateCommunityRoleUI() {
+    const session = getSession();
+    const isFaculty = session && session.role === "faculty";
+    const commFacultyDashboard = document.getElementById("commFacultyDashboard");
+    const commStudentToggleContainer = document.getElementById("commStudentToggleContainer");
+    const commDashFacultyName = document.getElementById("commDashFacultyName");
+    const askBranchSelect = document.getElementById("askBranchSelect");
+
+    if (isFaculty) {
+        if (commFacultyDashboard) commFacultyDashboard.classList.remove("hidden");
+        if (commStudentToggleContainer) commStudentToggleContainer.classList.add("hidden");
+        if (commDashFacultyName) commDashFacultyName.textContent = session.name || "Faculty";
+        if (askBranchSelect) askBranchSelect.value = "All";
+    } else if (session) {
+        if (commFacultyDashboard) commFacultyDashboard.classList.add("hidden");
+        if (commStudentToggleContainer) commStudentToggleContainer.classList.remove("hidden");
+        if (askBranchSelect) askBranchSelect.value = session.branch || "All";
+        updateCommunityStudentFeedToggleUI();
+    }
+}
+
+function updateCommunityStudentFeedToggleUI() {
+    const commFeedMyBranchBtn = document.getElementById("commFeedMyBranchBtn");
+    const commFeedAllBtn = document.getElementById("commFeedAllBtn");
+    const commFeedAudienceHint = document.getElementById("commFeedAudienceHint");
+    const commFeedBranchLabel = document.getElementById("commFeedBranchLabel");
+
+    const session = getSession();
+    const branch = session ? (session.branch || "CSE") : "CSE";
+    if (commFeedBranchLabel) commFeedBranchLabel.textContent = branch;
+
+    if (!commFeedMyBranchBtn || !commFeedAllBtn) return;
+
+    if (commStudentFeedMode === "my-branch") {
+        commFeedMyBranchBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs bg-brand-600 text-white";
+        commFeedAllBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900";
+        if (commFeedAudienceHint) {
+            commFeedAudienceHint.textContent = `Showing questions for ${branch} & college-wide topics`;
+        }
+    } else {
+        commFeedAllBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs bg-brand-600 text-white";
+        commFeedMyBranchBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900";
+        if (commFeedAudienceHint) {
+            commFeedAudienceHint.textContent = "Showing community questions across every branch";
+        }
+    }
+}
+
+
+// ==================================================
+// COMMUNITY FEED RENDERING & FILTERING
+// ==================================================
+
+async function renderCommunityFeed() {
+    const questions = await CommunityData.getQuestions();
+    const answers = await CommunityData.getAnswers();
+    const session = getSession();
+    const isFaculty = session && session.role === "faculty";
+    const userIdentifier = session ? (session.usn || session.name) : "";
+
+    // 1. Update Metrics in Hero & Faculty Dashboard
+    const totalQuestionsCount = questions.length;
+    const resolvedQuestionsCount = questions.filter(function (q) { return q.status === "resolved"; }).length;
+
+    const commTotalQuestionsCount = document.getElementById("commTotalQuestionsCount");
+    const commResolvedQuestionsCount = document.getElementById("commResolvedQuestionsCount");
+    if (commTotalQuestionsCount) commTotalQuestionsCount.textContent = totalQuestionsCount;
+    if (commResolvedQuestionsCount) commResolvedQuestionsCount.textContent = resolvedQuestionsCount;
+
+    // Faculty moderation dashboard counts
+    const unansweredQuestionsCount = questions.filter(function (q) {
+        const qAnswers = answers.filter(function (a) { return String(a.questionId) === String(q.id); });
+        return qAnswers.length === 0;
+    }).length;
+
+    const reportedQuestionsCount = questions.filter(function (q) { return q.reports && q.reports.length >= 3; }).length;
+    const reportedAnswersCount = answers.filter(function (a) { return a.reports && a.reports.length >= 3; }).length;
+    const totalReportedCount = reportedQuestionsCount + reportedAnswersCount;
+
+    const dashCommTotalCount = document.getElementById("dashCommTotalCount");
+    const dashCommUnansweredCount = document.getElementById("dashCommUnansweredCount");
+    const dashCommReportedCount = document.getElementById("dashCommReportedCount");
+
+    if (dashCommTotalCount) dashCommTotalCount.textContent = totalQuestionsCount;
+    if (dashCommUnansweredCount) dashCommUnansweredCount.textContent = unansweredQuestionsCount;
+    if (dashCommReportedCount) dashCommReportedCount.textContent = totalReportedCount;
+
+    // 2. Filter Questions
+    let filtered = [...questions];
+
+    if (commSearchText) {
+        const query = commSearchText.toLowerCase();
+        filtered = filtered.filter(function (q) {
+            return (q.title && q.title.toLowerCase().includes(query)) ||
+                   (q.details && q.details.toLowerCase().includes(query)) ||
+                   (q.topic && q.topic.toLowerCase().includes(query)) ||
+                   (q.authorName && q.authorName.toLowerCase().includes(query)) ||
+                   (q.authorUsn && q.authorUsn.toLowerCase().includes(query));
+        });
+    }
+
+    if (commCurrentTopic && commCurrentTopic !== "all") {
+        filtered = filtered.filter(function (q) {
+            return (q.topic || "").toLowerCase() === commCurrentTopic.toLowerCase();
+        });
+    }
+
+    if (commCurrentStatus && commCurrentStatus !== "all") {
+        filtered = filtered.filter(function (q) {
+            return q.status === commCurrentStatus;
+        });
+    }
+
+    // Branch filter
+    if (isFaculty) {
+        if (commFacultyBranch && commFacultyBranch !== "all") {
+            filtered = filtered.filter(function (q) {
+                return q.branch === "All" || q.branch === commFacultyBranch;
+            });
+        }
+    } else {
+        const studentBranch = session ? (session.branch || "CSE") : "CSE";
+        if (commStudentFeedMode === "my-branch") {
+            filtered = filtered.filter(function (q) {
+                return q.branch === "All" || q.branch === studentBranch;
+            });
+        }
+    }
+
+    // 3. Sort Questions (Pinned always stays at top)
+    filtered.sort(function (a, b) {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+
+        if (commCurrentSort === "upvotes") {
+            const diff = (b.upvotes || 0) - (a.upvotes || 0);
+            if (diff !== 0) return diff;
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        } else if (commCurrentSort === "unanswered") {
+            const aCount = answers.filter(function (ans) { return String(ans.questionId) === String(a.id); }).length;
+            const bCount = answers.filter(function (ans) { return String(ans.questionId) === String(b.id); }).length;
+            if (aCount === 0 && bCount > 0) return -1;
+            if (aCount > 0 && bCount === 0) return 1;
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        } else {
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        }
+    });
+
+    // 4. Render to DOM
+    const commQuestionsList = document.getElementById("commQuestionsList");
+    const commEmptyState = document.getElementById("commEmptyState");
+
+    if (filtered.length === 0) {
+        if (commQuestionsList) commQuestionsList.innerHTML = "";
+        if (commEmptyState) commEmptyState.classList.remove("hidden");
+        return;
+    }
+
+    if (commEmptyState) commEmptyState.classList.add("hidden");
+
+    if (commQuestionsList) {
+        commQuestionsList.innerHTML = filtered.map(function (q) {
+            const qAnswers = answers.filter(function (ans) { return String(ans.questionId) === String(q.id); });
+            const answerCount = qAnswers.length;
+            const hasUpvoted = Array.isArray(q.upvotedBy) && q.upvotedBy.includes(userIdentifier);
+            const isReported = Array.isArray(q.reports) && q.reports.length >= 3;
+
+            if (isReported && !isFaculty) {
+                return `
+                    <div class="p-4 bg-slate-100/70 border border-dashed border-slate-300 rounded-2xl text-center text-xs text-slate-500">
+                        ⚠️ <em>This question has been hidden pending faculty review.</em>
+                    </div>
+                `;
+            }
+
+            const topicClass = getTopicBadgeClass(q.topic);
+            const branchBadge = `<span class="bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold px-2 py-0.5 rounded-full">${escapeHtml(q.branch === "All" ? "All Branches" : q.branch)}</span>`;
+
+            const statusBadge = q.status === "resolved"
+                ? `<span class="status-badge-resolved text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5"><span>✓</span> Resolved</span>`
+                : q.status === "answered"
+                    ? `<span class="status-badge-answered text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5"><span>💬</span> Answered</span>`
+                    : `<span class="status-badge-open text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5"><span>⏳</span> Open</span>`;
+
+            return `
+                <div
+                    class="qa-card bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs cursor-pointer hover:border-brand-400 transition ${q.pinned ? 'question-card-pinned' : ''}"
+                    onclick="openQuestionDetail('${q.id}')"
+                >
+                    ${(isReported && isFaculty) ? `
+                        <div class="mb-3 p-2 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between text-xs text-rose-700">
+                            <span class="font-bold flex items-center gap-1"><span>⚠️</span> Reported for review (${q.reports.length} reports)</span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="restoreReportedItem('question', '${q.id}', event)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-0.5 rounded-lg text-xs shadow-xs">
+                                    Restore
+                                </button>
+                                <button type="button" onclick="deleteQuestionUI('${q.id}', event)" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-2.5 py-0.5 rounded-lg text-xs shadow-xs">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    ` : ""}
+
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div class="flex-1 min-w-0">
+                            <!-- Badges & Time -->
+                            <div class="flex flex-wrap items-center gap-1.5 mb-2">
+                                ${q.pinned ? `<span class="bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1"><span>📌</span> Pinned</span>` : ""}
+                                <span class="${topicClass} text-[10px] font-bold px-2 py-0.5 rounded-full">${escapeHtml(q.topic)}</span>
+                                ${branchBadge}
+                                ${statusBadge}
+                                <span class="text-[11px] text-slate-400 font-medium ml-auto sm:ml-0">${formatTimeAgo(q.createdAt)}</span>
+                            </div>
+
+                            <!-- Question Title -->
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900 group-hover:text-brand-600 transition leading-snug mb-1.5">
+                                ${escapeHtml(q.title)}
+                            </h3>
+
+                            <!-- 2-Line Details Preview -->
+                            <p class="text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed mb-3">
+                                ${q.details ? escapeHtml(q.details) : `<span class="text-slate-400 italic">No extra details provided.</span>`}
+                            </p>
+
+                            <!-- Author & Details -->
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                                    ${q.anonymous && !isFaculty ? "🎭" : (q.isFaculty ? "🎓" : getInitials(q.authorName))}
+                                </div>
+                                <div class="truncate">
+                                    ${formatAuthorDisplay(q, session)}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upvote & Answer Count Column -->
+                        <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 flex-shrink-0">
+                            <!-- Upvote Button -->
+                            <button
+                                type="button"
+                                onclick="upvoteQuestionUI('${q.id}', event)"
+                                class="px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition ${hasUpvoted ? 'upvote-active' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}"
+                                title="Upvote"
+                            >
+                                <span>▲</span>
+                                <span class="font-bold">${q.upvotes || 0}</span>
+                            </button>
+
+                            <!-- Answers Count -->
+                            <span class="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-xl">
+                                <span>💬</span>
+                                <span>${answerCount}</span>
+                                <span class="hidden sm:inline">${answerCount === 1 ? 'answer' : 'answers'}</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+}
+
+
+// ==================================================
+// QUESTION DETAIL VIEW & MODALS
+// ==================================================
+
+async function openQuestionDetail(questionId) {
+    currentActiveQuestionId = questionId;
+    const questions = await CommunityData.getQuestions();
+    const q = questions.find(function (item) { return String(item.id) === String(questionId); });
+    if (!q) {
+        showToast("Question not found or has been deleted.");
+        closeQuestionDetail();
+        return;
+    }
+
+    const answers = await CommunityData.getAnswers(questionId);
+    const session = getSession();
+    const userIdentifier = session ? (session.usn || session.name) : "";
+    const isFaculty = session && session.role === "faculty";
+    const isAuthor = session && ((session.usn && session.usn.toUpperCase() === (q.authorUsn || "").toUpperCase()) || (session.name && session.name === q.authorName));
+    const hasUpvotedQ = Array.isArray(q.upvotedBy) && q.upvotedBy.includes(userIdentifier);
+    const isReportedQ = Array.isArray(q.reports) && q.reports.length >= 3;
+
+    const questionDetailModal = document.getElementById("questionDetailModal");
+    const questionDetailContent = document.getElementById("questionDetailContent");
+    const detailAnswersCount = document.getElementById("detailAnswersCount");
+    const detailAnswersList = document.getElementById("detailAnswersList");
+
+    if (detailAnswersCount) {
+        detailAnswersCount.textContent = answers.length;
+    }
+
+    // Sort answers: Accepted first, then upvotes desc, then oldest first
+    const sortedAnswers = [...answers].sort(function (a, b) {
+        const aAccepted = String(q.acceptedAnswerId) === String(a.id);
+        const bAccepted = String(q.acceptedAnswerId) === String(b.id);
+        if (aAccepted && !bAccepted) return -1;
+        if (!aAccepted && bAccepted) return 1;
+
+        const aVotes = a.upvotes || 0;
+        const bVotes = b.upvotes || 0;
+        if (bVotes !== aVotes) return bVotes - aVotes;
+
+        return new Date(a.createdAt) - new Date(b.createdAt);
+    });
+
+    const statusBadgeHtml = q.status === "resolved"
+        ? `<span class="status-badge-resolved text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1"><span>✓</span> Resolved</span>`
+        : q.status === "answered"
+            ? `<span class="status-badge-answered text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1"><span>💬</span> Answered</span>`
+            : `<span class="status-badge-open text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1"><span>⏳</span> Open</span>`;
+
+    const topicClass = getTopicBadgeClass(q.topic);
+    const branchBadgeHtml = `<span class="bg-indigo-50 text-indigo-700 border border-indigo-200 text-[11px] font-bold px-2 py-0.5 rounded-full">${escapeHtml(q.branch === "All" ? "All Branches" : q.branch)}</span>`;
+
+    let questionModerationBanner = "";
+    if (isReportedQ) {
+        if (isFaculty) {
+            questionModerationBanner = `
+                <div class="mb-4 p-3 bg-rose-50 border border-rose-300 rounded-xl flex items-center justify-between gap-3 text-xs text-rose-800">
+                    <span class="font-bold flex items-center gap-1.5">
+                        <span>⚠️</span> Reported for moderation (${q.reports.length} reports).
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="restoreReportedItem('question', '${q.id}', event)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1 rounded-lg transition text-xs shadow-xs">
+                            🛡️ Restore
+                        </button>
+                        <button type="button" onclick="deleteQuestionUI('${q.id}', event)" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-1 rounded-lg transition text-xs shadow-xs">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            questionModerationBanner = `
+                <div class="mb-4 p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-800 font-semibold flex items-center gap-2">
+                    <span>⚠️</span> Hidden pending faculty review (Community safety).
+                </div>
+            `;
+        }
+    }
+
+    questionDetailContent.innerHTML = `
+        ${questionModerationBanner}
+        <div class="space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-1">
+                <div class="flex flex-wrap items-center gap-1.5">
+                    ${q.pinned ? `<span class="bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1"><span>📌</span> Pinned</span>` : ""}
+                    <span class="${topicClass} text-[11px] font-bold px-2.5 py-0.5 rounded-full">${escapeHtml(q.topic)}</span>
+                    ${branchBadgeHtml}
+                    ${statusBadgeHtml}
+                </div>
+                <span class="text-xs text-slate-400 font-medium">${formatTimeAgo(q.createdAt)}</span>
+            </div>
+
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">
+                ${escapeHtml(q.title)}
+            </h2>
+
+            <div class="text-slate-700 text-xs sm:text-sm leading-relaxed whitespace-pre-line bg-slate-50/70 p-4 rounded-xl border border-slate-100">
+                ${q.details ? escapeHtml(q.details) : `<span class="text-slate-400 italic">No additional details provided.</span>`}
+            </div>
+
+            <!-- Author & Action Controls -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-bold">
+                        ${q.anonymous && !isFaculty ? "🎭" : (q.isFaculty ? "🎓" : getInitials(q.authorName))}
+                    </div>
+                    <div>
+                        ${formatAuthorDisplay(q, session)}
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                    <!-- Upvote Button -->
+                    <button
+                        type="button"
+                        onclick="upvoteQuestionUI('${q.id}', event)"
+                        class="px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition ${hasUpvotedQ ? 'upvote-active' : 'border-slate-200 text-slate-700 hover:bg-slate-100'}"
+                        ${isAuthor ? 'title="You cannot upvote your own question"' : 'title="Upvote this question"'}
+                    >
+                        <span>▲</span>
+                        <span class="font-bold">${q.upvotes || 0}</span>
+                        <span class="hidden sm:inline">Upvotes</span>
+                    </button>
+
+                    <!-- Author Controls -->
+                    ${isAuthor ? `
+                        <button type="button" onclick="openEditQuestionModal('${q.id}', event)" class="px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition" title="Edit question">
+                            ✏️ Edit
+                        </button>
+                    ` : ""}
+
+                    ${(isAuthor || isFaculty) ? `
+                        <button type="button" onclick="deleteQuestionUI('${q.id}', event)" class="px-2.5 py-1.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition" title="Delete question">
+                            🗑️ Delete
+                        </button>
+                    ` : ""}
+
+                    <!-- Faculty Pin / Unpin -->
+                    ${isFaculty ? `
+                        <button type="button" onclick="togglePinQuestionUI('${q.id}', event)" class="px-2.5 py-1.5 rounded-xl border border-amber-200 text-amber-700 hover:bg-amber-50 text-xs font-semibold transition" title="${q.pinned ? 'Unpin question' : 'Pin to top of feed'}">
+                            ${q.pinned ? '📌 Unpin' : '📌 Pin'}
+                        </button>
+                    ` : ""}
+
+                    <!-- Report Button -->
+                    <button type="button" onclick="reportItemUI('question', '${q.id}', event)" class="px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-500 hover:text-rose-600 hover:border-rose-200 text-xs font-semibold transition" title="Report question">
+                        🚩 Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Answers List
+    if (sortedAnswers.length === 0) {
+        detailAnswersList.innerHTML = `
+            <div class="text-center py-8 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                <span class="text-3xl block mb-2">💬</span>
+                <p class="text-xs sm:text-sm font-semibold text-slate-600">No answers yet</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Be the first to share knowledge and help out below!</p>
+            </div>
+        `;
+    } else {
+        detailAnswersList.innerHTML = sortedAnswers.map(function (ans) {
+            const isAccepted = String(q.acceptedAnswerId) === String(ans.id);
+            const isAnsAuthor = session && ((session.usn && session.usn.toUpperCase() === (ans.authorUsn || "").toUpperCase()) || (session.name && session.name === ans.authorName));
+            const hasUpvotedAns = Array.isArray(ans.upvotedBy) && ans.upvotedBy.includes(userIdentifier);
+            const isReportedAns = Array.isArray(ans.reports) && ans.reports.length >= 3;
+
+            if (isReportedAns && !isFaculty) {
+                return `
+                    <div class="p-3.5 bg-slate-50 border border-dashed border-slate-300 rounded-xl text-xs text-slate-400 italic">
+                        ⚠️ This answer has been hidden pending faculty moderation review.
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="p-4 sm:p-5 rounded-2xl border transition ${isAccepted ? 'accepted-answer-card' : 'bg-white border-slate-200 shadow-xs'}">
+                    ${isAccepted ? `
+                        <div class="flex items-center gap-1.5 mb-2.5 text-emerald-700 text-xs font-extrabold uppercase tracking-wide">
+                            <span class="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]">✓</span>
+                            <span>Accepted Answer</span>
+                        </div>
+                    ` : ""}
+
+                    ${(isReportedAns && isFaculty) ? `
+                        <div class="mb-3 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center justify-between text-xs text-rose-700">
+                            <span class="font-bold">⚠️ Reported (${ans.reports.length} reports)</span>
+                            <button type="button" onclick="restoreReportedItem('answer', '${ans.id}', event)" class="text-emerald-700 font-bold hover:underline">
+                                🛡️ Restore
+                            </button>
+                        </div>
+                    ` : ""}
+
+                    <div class="text-slate-800 text-xs sm:text-sm leading-relaxed whitespace-pre-line mb-3">
+                        ${escapeHtml(ans.text)}
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-[11px] font-bold">
+                                ${ans.anonymous && !isFaculty ? "🎭" : (ans.isFaculty ? "🎓" : getInitials(ans.authorName))}
+                            </div>
+                            <div>
+                                ${formatAuthorDisplay(ans, session)}
+                                <span class="text-slate-400 text-[10px] ml-1.5">&middot; ${formatTimeAgo(ans.createdAt)}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <!-- Author Mark Accepted Button -->
+                            ${isAuthor ? `
+                                <button
+                                    type="button"
+                                    onclick="toggleAcceptAnswer('${q.id}', '${ans.id}')"
+                                    class="px-2.5 py-1 rounded-xl text-xs font-bold transition flex items-center gap-1 ${isAccepted ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs' : 'border border-slate-300 text-slate-700 hover:border-emerald-500 hover:text-emerald-700'}"
+                                    title="${isAccepted ? 'Click to remove accepted status' : 'Mark this answer as accepted'}"
+                                >
+                                    <span>${isAccepted ? '✓ Accepted' : 'Mark Accepted'}</span>
+                                </button>
+                            ` : ""}
+
+                            <!-- Upvote Answer -->
+                            <button
+                                type="button"
+                                onclick="upvoteAnswerUI('${ans.id}', event)"
+                                class="px-2.5 py-1 rounded-xl border text-xs font-semibold flex items-center gap-1 transition ${hasUpvotedAns ? 'upvote-active' : 'border-slate-200 text-slate-600 hover:bg-slate-100'}"
+                                ${isAnsAuthor ? 'title="You cannot upvote your own answer"' : 'title="Upvote answer"'}
+                            >
+                                <span>▲</span>
+                                <span class="font-bold">${ans.upvotes || 0}</span>
+                            </button>
+
+                            <!-- Edit Answer (Author only) -->
+                            ${isAnsAuthor ? `
+                                <button type="button" onclick="openEditAnswerModal('${ans.id}', event)" class="px-2 py-1 rounded-lg text-slate-500 hover:text-slate-800 text-xs font-medium" title="Edit answer">
+                                    ✏️
+                                </button>
+                            ` : ""}
+
+                            <!-- Delete Answer (Author or Faculty) -->
+                            ${(isAnsAuthor || isFaculty) ? `
+                                <button type="button" onclick="deleteAnswerUI('${ans.id}', event)" class="px-2 py-1 rounded-lg text-rose-500 hover:text-rose-700 text-xs font-medium" title="Delete answer">
+                                    🗑️
+                                </button>
+                            ` : ""}
+
+                            <!-- Report Answer -->
+                            <button type="button" onclick="reportItemUI('answer', '${ans.id}', event)" class="px-2 py-1 rounded-lg text-slate-400 hover:text-rose-600 text-xs font-medium" title="Report answer">
+                                🚩
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+
+    questionDetailModal.classList.remove("hidden");
+    questionDetailModal.classList.add("flex");
+}
+
+function closeQuestionDetail() {
+    currentActiveQuestionId = null;
+    const questionDetailModal = document.getElementById("questionDetailModal");
+    if (questionDetailModal) {
+        questionDetailModal.classList.add("hidden");
+        questionDetailModal.classList.remove("flex");
+    }
+}
+
+function openAskModal() {
+    const session = getSession();
+    if (!session) {
+        showToast("Please sign in or select a role to ask a question.");
+        if (roleScreen) roleScreen.classList.remove("hidden");
+        return;
+    }
+
+    const askQuestionModal = document.getElementById("askQuestionModal");
+    const askTitleInput = document.getElementById("askTitleInput");
+    const askTitleCounter = document.getElementById("askTitleCounter");
+    const askDetailsInput = document.getElementById("askDetailsInput");
+    const askDetailsCounter = document.getElementById("askDetailsCounter");
+    const askTopicSelect = document.getElementById("askTopicSelect");
+    const askBranchSelect = document.getElementById("askBranchSelect");
+    const askAnonymousCheck = document.getElementById("askAnonymousCheck");
+    const askQuestionError = document.getElementById("askQuestionError");
+    const similarQuestionsBox = document.getElementById("similarQuestionsBox");
+
+    if (askTitleInput) askTitleInput.value = "";
+    if (askTitleCounter) askTitleCounter.textContent = "0 / 120";
+    if (askDetailsInput) askDetailsInput.value = "";
+    if (askDetailsCounter) askDetailsCounter.textContent = "0 / 1000";
+    if (askTopicSelect) askTopicSelect.value = "Exams";
+    if (askBranchSelect) {
+        askBranchSelect.value = session.branch || "All";
+    }
+    if (askAnonymousCheck) askAnonymousCheck.checked = false;
+    if (askQuestionError) askQuestionError.classList.add("hidden");
+    if (similarQuestionsBox) similarQuestionsBox.classList.add("hidden");
+
+    if (askQuestionModal) {
+        askQuestionModal.classList.remove("hidden");
+        askQuestionModal.classList.add("flex");
+    }
+    if (askTitleInput) {
+        setTimeout(function () { askTitleInput.focus(); }, 50);
+    }
+}
+
+function closeAskModal() {
+    const askQuestionModal = document.getElementById("askQuestionModal");
+    if (askQuestionModal) {
+        askQuestionModal.classList.add("hidden");
+        askQuestionModal.classList.remove("flex");
+    }
+}
+
+
+// ==================================================
+// GLOBAL ACTIONS & EVENT HANDLERS
+// ==================================================
+
+window.toggleAcceptAnswer = async function (questionId, answerId) {
+    try {
+        const questions = await CommunityData.getQuestions();
+        const question = questions.find(function (q) { return String(q.id) === String(questionId); });
+        if (!question) return;
+
+        const session = getSession();
+        if (!session) {
+            showToast("Please log in to accept an answer.");
+            return;
+        }
+
+        const isAuthor = (session.usn && session.usn.toUpperCase() === (question.authorUsn || "").toUpperCase()) ||
+                         (session.name && session.name === question.authorName);
+        if (!isAuthor) {
+            showToast("Only the question author can accept an answer.");
+            return;
+        }
+
+        const isCurrentlyAccepted = String(question.acceptedAnswerId) === String(answerId);
+        const newAcceptedId = isCurrentlyAccepted ? null : answerId;
+        const newStatus = newAcceptedId ? "resolved" : "answered";
+
+        await CommunityData.updateQuestion(questionId, {
+            acceptedAnswerId: newAcceptedId,
+            status: newStatus
+        });
+
+        showToast(isCurrentlyAccepted ? "Accepted answer unmarked." : "Answer marked as accepted! ✓");
+        openQuestionDetail(questionId);
+        renderCommunityFeed();
+    } catch (err) {
+        showToast(err.message || "Could not update accepted answer.");
+    }
+};
+
+window.upvoteQuestionUI = async function (questionId, event) {
+    if (event) event.stopPropagation();
+    try {
+        const res = await CommunityData.toggleUpvoteQuestion(questionId);
+        showToast(res.hasUpvoted ? "Upvoted question! ▲" : "Upvote removed.");
+        if (currentActiveQuestionId === questionId) {
+            openQuestionDetail(questionId);
+        }
+        renderCommunityFeed();
+    } catch (err) {
+        showToast(err.message || "Could not upvote.");
+    }
+};
+
+window.upvoteAnswerUI = async function (answerId, event) {
+    if (event) event.stopPropagation();
+    try {
+        const res = await CommunityData.toggleUpvoteAnswer(answerId);
+        showToast(res.hasUpvoted ? "Upvoted answer! ▲" : "Upvote removed.");
+        if (currentActiveQuestionId) {
+            openQuestionDetail(currentActiveQuestionId);
+        }
+    } catch (err) {
+        showToast(err.message || "Could not upvote.");
+    }
+};
+
+window.reportItemUI = async function (type, id, event) {
+    if (event) event.stopPropagation();
+    const session = getSession();
+    if (!session) {
+        showToast("Please log in to report content.");
+        return;
+    }
+
+    if (!confirm("Are you sure you want to report this post to faculty for community moderation?")) {
+        return;
+    }
+
+    try {
+        const res = await CommunityData.addReport(type, id, session.usn || session.name);
+        if (res.success) {
+            showToast("Report submitted to faculty review. Thank you for keeping the community safe.");
+            if (type === "question" && currentActiveQuestionId === id) {
+                openQuestionDetail(id);
+            } else if (type === "answer" && currentActiveQuestionId) {
+                openQuestionDetail(currentActiveQuestionId);
+            }
+            renderCommunityFeed();
+        } else {
+            showToast(res.message || "You have already reported this item.");
+        }
+    } catch (err) {
+        showToast(err.message || "Could not submit report.");
+    }
+};
+
+window.restoreReportedItem = async function (type, id, event) {
+    if (event) event.stopPropagation();
+    try {
+        await CommunityData.restoreItem(type, id);
+        showToast("Item restored and removed from moderation queue.");
+        if (type === "question" && currentActiveQuestionId === id) {
+            openQuestionDetail(id);
+        } else if (type === "answer" && currentActiveQuestionId) {
+            openQuestionDetail(currentActiveQuestionId);
+        }
+        renderCommunityFeed();
+    } catch (err) {
+        showToast(err.message || "Could not restore item.");
+    }
+};
+
+window.deleteQuestionUI = async function (id, event) {
+    if (event) event.stopPropagation();
+    if (!confirm("Are you sure you want to delete this question and all its answers?")) {
+        return;
+    }
+    try {
+        await CommunityData.deleteQuestion(id);
+        showToast("Question deleted.");
+        closeQuestionDetail();
+        renderCommunityFeed();
+    } catch (err) {
+        showToast(err.message || "Could not delete question.");
+    }
+};
+
+window.deleteAnswerUI = async function (id, event) {
+    if (event) event.stopPropagation();
+    if (!confirm("Are you sure you want to delete this answer?")) {
+        return;
+    }
+    try {
+        await CommunityData.deleteAnswer(id);
+        showToast("Answer deleted.");
+        if (currentActiveQuestionId) {
+            openQuestionDetail(currentActiveQuestionId);
+        }
+        renderCommunityFeed();
+    } catch (err) {
+        showToast(err.message || "Could not delete answer.");
+    }
+};
+
+window.togglePinQuestionUI = async function (id, event) {
+    if (event) event.stopPropagation();
+    try {
+        const questions = await CommunityData.getQuestions();
+        const q = questions.find(function (item) { return String(item.id) === String(id); });
+        if (!q) return;
+
+        const newPinned = !q.pinned;
+        await CommunityData.updateQuestion(id, { pinned: newPinned });
+        showToast(newPinned ? "Question pinned to top! 📌" : "Question unpinned.");
+        if (currentActiveQuestionId === id) {
+            openQuestionDetail(id);
+        }
+        renderCommunityFeed();
+    } catch (err) {
+        showToast(err.message || "Could not update pinned state.");
+    }
+};
+
+window.openEditQuestionModal = async function (id, event) {
+    if (event) event.stopPropagation();
+    const questions = await CommunityData.getQuestions();
+    const q = questions.find(function (item) { return String(item.id) === String(id); });
+    if (!q) return;
+
+    const editQuestionModal = document.getElementById("editQuestionModal");
+    const editQuestionId = document.getElementById("editQuestionId");
+    const editQuestionTitleInput = document.getElementById("editQuestionTitleInput");
+    const editQuestionTitleCounter = document.getElementById("editQuestionTitleCounter");
+    const editQuestionDetailsInput = document.getElementById("editQuestionDetailsInput");
+    const editQuestionDetailsCounter = document.getElementById("editQuestionDetailsCounter");
+    const editQuestionTopicSelect = document.getElementById("editQuestionTopicSelect");
+    const editQuestionBranchSelect = document.getElementById("editQuestionBranchSelect");
+    const editQuestionError = document.getElementById("editQuestionError");
+
+    editQuestionId.value = q.id;
+    editQuestionTitleInput.value = q.title;
+    editQuestionTitleCounter.textContent = `${q.title.length} / 120`;
+    editQuestionDetailsInput.value = q.details || "";
+    editQuestionDetailsCounter.textContent = `${(q.details || "").length} / 1000`;
+    editQuestionTopicSelect.value = q.topic || "General";
+    editQuestionBranchSelect.value = q.branch || "All";
+    editQuestionError.classList.add("hidden");
+
+    editQuestionModal.classList.remove("hidden");
+    editQuestionModal.classList.add("flex");
+};
+
+window.openEditAnswerModal = async function (id, event) {
+    if (event) event.stopPropagation();
+    const answers = await CommunityData.getAnswers();
+    const a = answers.find(function (item) { return String(item.id) === String(id); });
+    if (!a) return;
+
+    const editAnswerModal = document.getElementById("editAnswerModal");
+    const editAnswerId = document.getElementById("editAnswerId");
+    const editAnswerTextInput = document.getElementById("editAnswerTextInput");
+    const editAnswerCharCounter = document.getElementById("editAnswerCharCounter");
+    const editAnswerError = document.getElementById("editAnswerError");
+
+    editAnswerId.value = a.id;
+    editAnswerTextInput.value = a.text;
+    editAnswerCharCounter.textContent = `${a.text.length} / 1000`;
+    editAnswerError.classList.add("hidden");
+
+    editAnswerModal.classList.remove("hidden");
+    editAnswerModal.classList.add("flex");
+};
+
+
+// ==================================================
+// INITIALIZE COMMUNITY LISTENERS
+// ==================================================
+
+// Tab Switcher Buttons
+const tabNoticesBtn = document.getElementById("tabNoticesBtn");
+const tabCommunityBtn = document.getElementById("tabCommunityBtn");
+const navAskQuestionBtn = document.getElementById("navAskQuestionBtn");
+
+if (tabNoticesBtn) {
+    tabNoticesBtn.addEventListener("click", function () { switchMainTab("notices"); });
+}
+if (tabCommunityBtn) {
+    tabCommunityBtn.addEventListener("click", function () { switchMainTab("community"); });
+}
+if (navAskQuestionBtn) {
+    navAskQuestionBtn.addEventListener("click", openAskModal);
+}
+
+// Ask Question Modal Controls
+const openAskQuestionBtn = document.getElementById("openAskQuestionBtn");
+const closeAskModalBtn = document.getElementById("closeAskModalBtn");
+const cancelAskModalBtn = document.getElementById("cancelAskModalBtn");
+const commEmptyAskBtn = document.getElementById("commEmptyAskBtn");
+const askQuestionForm = document.getElementById("askQuestionForm");
+const askTitleInput = document.getElementById("askTitleInput");
+const askTitleCounter = document.getElementById("askTitleCounter");
+const askDetailsInput = document.getElementById("askDetailsInput");
+const askDetailsCounter = document.getElementById("askDetailsCounter");
+const askTopicSelect = document.getElementById("askTopicSelect");
+const askBranchSelect = document.getElementById("askBranchSelect");
+const askAnonymousCheck = document.getElementById("askAnonymousCheck");
+const askQuestionError = document.getElementById("askQuestionError");
+const submitAskBtn = document.getElementById("submitAskBtn");
+const similarQuestionsBox = document.getElementById("similarQuestionsBox");
+const similarQuestionsList = document.getElementById("similarQuestionsList");
+
+if (openAskQuestionBtn) openAskQuestionBtn.addEventListener("click", openAskModal);
+if (closeAskModalBtn) closeAskModalBtn.addEventListener("click", closeAskModal);
+if (cancelAskModalBtn) cancelAskModalBtn.addEventListener("click", closeAskModal);
+if (commEmptyAskBtn) commEmptyAskBtn.addEventListener("click", openAskModal);
+
+if (askTitleInput) {
+    askTitleInput.addEventListener("input", async function (e) {
+        const val = e.target.value;
+        if (askTitleCounter) {
+            askTitleCounter.textContent = `${val.length} / 120`;
+        }
+        if (val.length >= 3) {
+            const allQ = await CommunityData.getQuestions();
+            const similar = findSimilarQuestions(val, allQ);
+            if (similar.length > 0) {
+                similarQuestionsBox.classList.remove("hidden");
+                similarQuestionsList.innerHTML = similar.map(function (sq) {
+                    return `
+                        <div class="flex items-center justify-between p-1.5 hover:bg-amber-100/70 rounded-lg transition cursor-pointer group" onclick="openQuestionDetail('${sq.id}'); closeAskModal();">
+                            <span class="truncate font-medium text-slate-800 group-hover:text-amber-900 text-xs">${escapeHtml(sq.title)}</span>
+                            <span class="text-[10px] text-amber-700 font-semibold whitespace-nowrap ml-2">View &rarr;</span>
+                        </div>
+                    `;
+                }).join("");
+            } else {
+                similarQuestionsBox.classList.add("hidden");
+            }
+        } else {
+            similarQuestionsBox.classList.add("hidden");
+        }
+    });
+}
+
+if (askDetailsInput) {
+    askDetailsInput.addEventListener("input", function (e) {
+        if (askDetailsCounter) {
+            askDetailsCounter.textContent = `${e.target.value.length} / 1000`;
+        }
+    });
+}
+
+if (askQuestionForm) {
+    askQuestionForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        askQuestionError.classList.add("hidden");
+        const title = askTitleInput.value.trim();
+        const details = askDetailsInput.value.trim();
+        const topic = askTopicSelect.value;
+        const branch = askBranchSelect.value;
+        const anonymous = askAnonymousCheck.checked;
+
+        if (!title) {
+            askQuestionError.textContent = "Please enter a question title.";
+            askQuestionError.classList.remove("hidden");
+            return;
+        }
+
+        try {
+            submitAskBtn.disabled = true;
+            submitAskBtn.innerHTML = "<span>Posting...</span>";
+            const newQ = await CommunityData.saveQuestion({
+                title: title,
+                details: details,
+                topic: topic,
+                branch: branch,
+                anonymous: anonymous
+            });
+
+            closeAskModal();
+            showToast("Question posted to Community!");
+            renderCommunityFeed();
+            openQuestionDetail(newQ.id);
+        } catch (err) {
+            askQuestionError.textContent = err.message || "Failed to post question.";
+            askQuestionError.classList.remove("hidden");
+        } finally {
+            submitAskBtn.disabled = false;
+            submitAskBtn.innerHTML = "<span>Post Question &rarr;</span>";
+        }
+    });
+}
+
+// Question Detail Modal Controls
+const closeQuestionDetailBtn = document.getElementById("closeQuestionDetailBtn");
+const backToCommunityBtn = document.getElementById("backToCommunityBtn");
+const addAnswerForm = document.getElementById("addAnswerForm");
+const answerTextInput = document.getElementById("answerTextInput");
+const answerCharCounter = document.getElementById("answerCharCounter");
+const answerAnonymousCheck = document.getElementById("answerAnonymousCheck");
+const submitAnswerBtn = document.getElementById("submitAnswerBtn");
+const addAnswerError = document.getElementById("addAnswerError");
+
+if (closeQuestionDetailBtn) closeQuestionDetailBtn.addEventListener("click", closeQuestionDetail);
+if (backToCommunityBtn) backToCommunityBtn.addEventListener("click", closeQuestionDetail);
+
+if (answerTextInput) {
+    answerTextInput.addEventListener("input", function (e) {
+        if (answerCharCounter) {
+            answerCharCounter.textContent = `${e.target.value.length} / 1000`;
+        }
+    });
+}
+
+if (addAnswerForm) {
+    addAnswerForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        addAnswerError.classList.add("hidden");
+        if (!currentActiveQuestionId) return;
+
+        const text = answerTextInput.value.trim();
+        const anonymous = answerAnonymousCheck.checked;
+
+        if (!text) {
+            addAnswerError.textContent = "Please write your answer before submitting.";
+            addAnswerError.classList.remove("hidden");
+            return;
+        }
+
+        try {
+            submitAnswerBtn.disabled = true;
+            submitAnswerBtn.innerHTML = "<span>Posting...</span>";
+            await CommunityData.saveAnswer({
+                questionId: currentActiveQuestionId,
+                text: text,
+                anonymous: anonymous
+            });
+
+            answerTextInput.value = "";
+            answerAnonymousCheck.checked = false;
+            if (answerCharCounter) answerCharCounter.textContent = "0 / 1000";
+            showToast("Answer posted successfully!");
+            openQuestionDetail(currentActiveQuestionId);
+            renderCommunityFeed();
+        } catch (err) {
+            addAnswerError.textContent = err.message || "Failed to post answer.";
+            addAnswerError.classList.remove("hidden");
+        } finally {
+            submitAnswerBtn.disabled = false;
+            submitAnswerBtn.innerHTML = "<span>Post Answer</span>";
+        }
+    });
+}
+
+// Edit Question Form
+const editQuestionForm = document.getElementById("editQuestionForm");
+const closeEditQuestionBtn = document.getElementById("closeEditQuestionBtn");
+const cancelEditQuestionBtn = document.getElementById("cancelEditQuestionBtn");
+const editQuestionTitleInput = document.getElementById("editQuestionTitleInput");
+const editQuestionTitleCounter = document.getElementById("editQuestionTitleCounter");
+const editQuestionDetailsInput = document.getElementById("editQuestionDetailsInput");
+const editQuestionDetailsCounter = document.getElementById("editQuestionDetailsCounter");
+
+if (closeEditQuestionBtn) {
+    closeEditQuestionBtn.addEventListener("click", function () {
+        document.getElementById("editQuestionModal").classList.add("hidden");
+    });
+}
+if (cancelEditQuestionBtn) {
+    cancelEditQuestionBtn.addEventListener("click", function () {
+        document.getElementById("editQuestionModal").classList.add("hidden");
+    });
+}
+if (editQuestionTitleInput) {
+    editQuestionTitleInput.addEventListener("input", function (e) {
+        if (editQuestionTitleCounter) editQuestionTitleCounter.textContent = `${e.target.value.length} / 120`;
+    });
+}
+if (editQuestionDetailsInput) {
+    editQuestionDetailsInput.addEventListener("input", function (e) {
+        if (editQuestionDetailsCounter) editQuestionDetailsCounter.textContent = `${e.target.value.length} / 1000`;
+    });
+}
+if (editQuestionForm) {
+    editQuestionForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const id = document.getElementById("editQuestionId").value;
+        const title = editQuestionTitleInput.value.trim();
+        const details = editQuestionDetailsInput.value.trim();
+        const topic = document.getElementById("editQuestionTopicSelect").value;
+        const branch = document.getElementById("editQuestionBranchSelect").value;
+        const errorEl = document.getElementById("editQuestionError");
+        errorEl.classList.add("hidden");
+
+        if (!title) {
+            errorEl.textContent = "Question title cannot be empty.";
+            errorEl.classList.remove("hidden");
+            return;
+        }
+
+        try {
+            await CommunityData.updateQuestion(id, {
+                title: title,
+                details: details,
+                topic: topic,
+                branch: branch
+            });
+            document.getElementById("editQuestionModal").classList.add("hidden");
+            showToast("Question updated successfully!");
+            if (currentActiveQuestionId === id) {
+                openQuestionDetail(id);
+            }
+            renderCommunityFeed();
+        } catch (err) {
+            errorEl.textContent = err.message || "Failed to update question.";
+            errorEl.classList.remove("hidden");
+        }
+    });
+}
+
+// Edit Answer Form
+const editAnswerForm = document.getElementById("editAnswerForm");
+const closeEditAnswerBtn = document.getElementById("closeEditAnswerBtn");
+const cancelEditAnswerBtn = document.getElementById("cancelEditAnswerBtn");
+const editAnswerTextInput = document.getElementById("editAnswerTextInput");
+const editAnswerCharCounter = document.getElementById("editAnswerCharCounter");
+
+if (closeEditAnswerBtn) {
+    closeEditAnswerBtn.addEventListener("click", function () {
+        document.getElementById("editAnswerModal").classList.add("hidden");
+    });
+}
+if (cancelEditAnswerBtn) {
+    cancelEditAnswerBtn.addEventListener("click", function () {
+        document.getElementById("editAnswerModal").classList.add("hidden");
+    });
+}
+if (editAnswerTextInput) {
+    editAnswerTextInput.addEventListener("input", function (e) {
+        if (editAnswerCharCounter) editAnswerCharCounter.textContent = `${e.target.value.length} / 1000`;
+    });
+}
+if (editAnswerForm) {
+    editAnswerForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const id = document.getElementById("editAnswerId").value;
+        const text = editAnswerTextInput.value.trim();
+        const errorEl = document.getElementById("editAnswerError");
+        errorEl.classList.add("hidden");
+
+        if (!text) {
+            errorEl.textContent = "Answer text cannot be empty.";
+            errorEl.classList.remove("hidden");
+            return;
+        }
+
+        try {
+            await CommunityData.updateAnswer(id, text);
+            document.getElementById("editAnswerModal").classList.add("hidden");
+            showToast("Answer updated successfully!");
+            if (currentActiveQuestionId) {
+                openQuestionDetail(currentActiveQuestionId);
+            }
+            renderCommunityFeed();
+        } catch (err) {
+            errorEl.textContent = err.message || "Failed to update answer.";
+            errorEl.classList.remove("hidden");
+        }
+    });
+}
+
+// Community Toolbar Search & Filter Listeners
+const commSearchInput = document.getElementById("commSearchInput");
+const commClearSearchBtn = document.getElementById("commClearSearchBtn");
+const commFacultyBranchFilter = document.getElementById("commFacultyBranchFilter");
+const commStatusFilter = document.getElementById("commStatusFilter");
+const commSortSelect = document.getElementById("commSortSelect");
+const commTopicPillsContainer = document.getElementById("commTopicPillsContainer");
+const commFeedMyBranchBtn = document.getElementById("commFeedMyBranchBtn");
+const commFeedAllBtn = document.getElementById("commFeedAllBtn");
+
+if (commSearchInput) {
+    commSearchInput.addEventListener("input", function (e) {
+        commSearchText = e.target.value.trim();
+        renderCommunityFeed();
+    });
+}
+
+if (commClearSearchBtn) {
+    commClearSearchBtn.addEventListener("click", function () {
+        if (commSearchInput) commSearchInput.value = "";
+        commSearchText = "";
+        renderCommunityFeed();
+        if (commSearchInput) commSearchInput.focus();
+    });
+}
+
+if (commFacultyBranchFilter) {
+    commFacultyBranchFilter.addEventListener("change", function (e) {
+        commFacultyBranch = e.target.value;
+        renderCommunityFeed();
+    });
+}
+
+if (commStatusFilter) {
+    commStatusFilter.addEventListener("change", function (e) {
+        commCurrentStatus = e.target.value;
+        renderCommunityFeed();
+    });
+}
+
+if (commSortSelect) {
+    commSortSelect.addEventListener("change", function (e) {
+        commCurrentSort = e.target.value;
+        renderCommunityFeed();
+    });
+}
+
+if (commTopicPillsContainer) {
+    commTopicPillsContainer.addEventListener("click", function (e) {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        const topic = btn.getAttribute("data-topic");
+        if (!topic) return;
+
+        commCurrentTopic = topic;
+        commTopicPillsContainer.querySelectorAll("button").forEach(function (b) {
+            b.classList.remove("active-pill");
+        });
+        btn.classList.add("active-pill");
+        renderCommunityFeed();
+    });
+}
+
+if (commFeedMyBranchBtn && commFeedAllBtn) {
+    commFeedMyBranchBtn.addEventListener("click", function () {
+        commStudentFeedMode = "my-branch";
+        updateCommunityStudentFeedToggleUI();
+        renderCommunityFeed();
+    });
+
+    commFeedAllBtn.addEventListener("click", function () {
+        commStudentFeedMode = "all";
+        updateCommunityStudentFeedToggleUI();
+        renderCommunityFeed();
+    });
+}
+
+// Modal Backdrop Click Listeners
+["askQuestionModal", "questionDetailModal", "editQuestionModal", "editAnswerModal"].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener("click", function (e) {
+            if (e.target === el) {
+                if (id === "askQuestionModal") closeAskModal();
+                else if (id === "questionDetailModal") closeQuestionDetail();
+                else el.classList.add("hidden");
+            }
+        });
+    }
+});
+
+
+// ==================================================
 // 24. INITIAL APPLICATION BOOTSTRAP & SYNC
 // ==================================================
 
-console.log("Campus Voice Portal Loaded with Hybrid Cross-Browser Storage.");
+console.log("Campus Voice Portal Loaded with Hybrid Cross-Browser Storage & Community Q&A.");
 populateBranchControls();
 renderCategoryFiltersAndDropdowns();
+initCommunityData();
 applyRole();
+
+// Initialize active tab from localStorage ("notices" or "community")
+switchMainTab(localStorage.getItem("campusActiveTab") || "notices");
 
 // Initial sync with server
 syncNoticesFromServer();
 syncUsersFromServer();
 syncCategoriesFromServer();
+syncCommunityFromServer();
 
 // Periodic live sync every 3 seconds (syncs Edge & Chrome in real-time)
 setInterval(function () {
     syncNoticesFromServer();
     syncCategoriesFromServer();
+    syncCommunityFromServer();
 }, 3000);
 
 // Sync immediately when browser window regains focus
@@ -2930,4 +4997,6 @@ window.addEventListener("focus", function () {
     syncNoticesFromServer();
     syncUsersFromServer();
     syncCategoriesFromServer();
+    syncCommunityFromServer();
 });
+

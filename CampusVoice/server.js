@@ -15,6 +15,8 @@ const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 const NOTICES_FILE = path.join(DATA_DIR, 'notices.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json');
+const QUESTIONS_FILE = path.join(DATA_DIR, 'questions.json');
+const ANSWERS_FILE = path.join(DATA_DIR, 'answers.json');
 
 // Ensure data and uploads directories exist
 if (!fs.existsSync(DATA_DIR)) {
@@ -119,6 +121,145 @@ if (!fs.existsSync(CATEGORIES_FILE)) {
     fs.writeFileSync(CATEGORIES_FILE, JSON.stringify(defaultCategories, null, 2));
 }
 
+// Initial default Q&A questions and answers seed data
+const defaultQuestions = [
+    {
+        id: 1792945000001,
+        title: "What are the core technical rounds asked in Ahlya Technologies campus drive?",
+        details: "Can seniors share what topics to focus on? Is it primarily DSA and system design, or do they ask deep questions on OS and DBMS?",
+        topic: "Placements",
+        branch: "CSE",
+        authorUsn: "1GE22CS045",
+        authorName: "Aditya Sharma",
+        isFaculty: false,
+        anonymous: false,
+        createdAt: "2026-10-24T10:30:00.000Z",
+        status: "resolved",
+        acceptedAnswerId: 1792945100001,
+        upvotes: 14,
+        upvotedBy: ["1GE22AI012", "1GE22CS089"],
+        reports: [],
+        pinned: true
+    },
+    {
+        id: 1792945000002,
+        title: "Best datasets and frameworks for 5th semester Computer Vision mini-project?",
+        details: "Our team is planning to build a real-time sign language interpreter using OpenCV and PyTorch. Would Kaggle datasets be sufficient or do we need to capture our own video data?",
+        topic: "Projects",
+        branch: "AIML",
+        authorUsn: "1GE22AI012",
+        authorName: "Pooja Hegde",
+        isFaculty: false,
+        anonymous: false,
+        createdAt: "2026-10-24T14:15:00.000Z",
+        status: "answered",
+        acceptedAnswerId: null,
+        upvotes: 9,
+        upvotedBy: ["1GE22CS045"],
+        reports: [],
+        pinned: false
+    },
+    {
+        id: 1792945000003,
+        title: "VTU Odd Semester Practical and Theory exam schedule clarification",
+        details: "Has the official circular for 5th sem lab examination dates been released by the exam section? Some circulars circulating on WhatsApp mention Nov 15th.",
+        topic: "Exams",
+        branch: "All",
+        authorUsn: "1GE22ME019",
+        authorName: "Karthik Nair",
+        isFaculty: false,
+        anonymous: true,
+        createdAt: "2026-10-25T08:00:00.000Z",
+        status: "answered",
+        acceptedAnswerId: null,
+        upvotes: 21,
+        upvotedBy: ["1GE22CS045", "1GE22AI012"],
+        reports: [],
+        pinned: true
+    },
+    {
+        id: 1792945000004,
+        title: "Availability of Microcontroller STM32 development boards in department library",
+        details: "Do we need a faculty permission slip to issue the STM32 kits for the Embedded Systems course, or can we issue them directly with our college ID card?",
+        topic: "Academics",
+        branch: "ECE",
+        authorUsn: "1GE22EC055",
+        authorName: "Suresh Kumar",
+        isFaculty: false,
+        anonymous: false,
+        createdAt: "2026-10-25T11:20:00.000Z",
+        status: "open",
+        acceptedAnswerId: null,
+        upvotes: 5,
+        upvotedBy: [],
+        reports: [],
+        pinned: false
+    }
+];
+
+const defaultAnswers = [
+    {
+        id: 1792945100001,
+        questionId: 1792945000001,
+        text: "Focus heavily on Data Structures (Trees, Graphs, Hash Maps), SQL queries, and Object-Oriented Programming. They also emphasize clean coding and explaining your thought process during problem solving.",
+        authorUsn: "FACULTY_CSE",
+        authorName: "Dr. Ramesh (CSE Dept)",
+        isFaculty: true,
+        anonymous: false,
+        createdAt: "2026-10-24T12:00:00.000Z",
+        upvotes: 18,
+        upvotedBy: ["1GE22CS045", "1GE22AI012"],
+        reports: []
+    },
+    {
+        id: 1792945100002,
+        questionId: 1792945000001,
+        text: "Also review your 4th sem DBMS mini-project! In my round, they asked me to write SQL join queries on paper.",
+        authorUsn: "1GE22CS089",
+        authorName: "Kavya Rao",
+        isFaculty: false,
+        anonymous: false,
+        createdAt: "2026-10-24T15:45:00.000Z",
+        upvotes: 7,
+        upvotedBy: [],
+        reports: []
+    },
+    {
+        id: 1792945100003,
+        questionId: 1792945000002,
+        text: "We used the ASL Alphabet dataset from Kaggle last semester along with MediaPipe for hand landmark detection. It runs in real-time even on standard laptop CPUs!",
+        authorUsn: "1GE22AI034",
+        authorName: "Rahul Verma",
+        isFaculty: false,
+        anonymous: false,
+        createdAt: "2026-10-24T16:20:00.000Z",
+        upvotes: 11,
+        upvotedBy: ["1GE22AI012"],
+        reports: []
+    },
+    {
+        id: 1792945100004,
+        questionId: 1792945000003,
+        text: "Please refer only to the official notices published here on Campus Voice. The lab examinations will commence from Nov 22nd. An official departmental circular will be uploaded by tomorrow.",
+        authorUsn: "FACULTY_CSE",
+        authorName: "Dr. Ramesh (CSE Dept)",
+        isFaculty: true,
+        anonymous: false,
+        createdAt: "2026-10-25T09:10:00.000Z",
+        upvotes: 25,
+        upvotedBy: ["1GE22CS045", "1GE22ME019"],
+        reports: []
+    }
+];
+
+if (!fs.existsSync(QUESTIONS_FILE)) {
+    fs.writeFileSync(QUESTIONS_FILE, JSON.stringify(defaultQuestions, null, 2));
+}
+
+if (!fs.existsSync(ANSWERS_FILE)) {
+    fs.writeFileSync(ANSWERS_FILE, JSON.stringify(defaultAnswers, null, 2));
+}
+
 // Helper to set standard CORS headers
 function setCorsHeaders(res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -207,6 +348,90 @@ const server = http.createServer((req, res) => {
                         if (err) {
                             res.writeHead(500, { 'Content-Type': 'application/json' });
                             res.end(JSON.stringify({ error: 'Failed to save categories' }));
+                        } else {
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ success: true }));
+                        }
+                    });
+                } catch (e) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'Invalid JSON' }));
+                }
+            });
+            return;
+        }
+    }
+
+    // =====================================
+    // 1.6 API: QUESTIONS (/api/questions)
+    // =====================================
+    if (pathname === '/api/questions') {
+        if (req.method === 'GET') {
+            fs.readFile(QUESTIONS_FILE, 'utf8', (err, data) => {
+                if (err) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(defaultQuestions));
+                } else {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(data);
+                }
+            });
+            return;
+        }
+
+        if (req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => { body += chunk; });
+            req.on('end', () => {
+                try {
+                    const parsed = JSON.parse(body);
+                    if (!Array.isArray(parsed)) throw new Error("Questions must be an array");
+                    fs.writeFile(QUESTIONS_FILE, JSON.stringify(parsed, null, 2), err => {
+                        if (err) {
+                            res.writeHead(500, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ error: 'Failed to save questions' }));
+                        } else {
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ success: true }));
+                        }
+                    });
+                } catch (e) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'Invalid JSON' }));
+                }
+            });
+            return;
+        }
+    }
+
+    // =====================================
+    // 1.7 API: ANSWERS (/api/answers)
+    // =====================================
+    if (pathname === '/api/answers') {
+        if (req.method === 'GET') {
+            fs.readFile(ANSWERS_FILE, 'utf8', (err, data) => {
+                if (err) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(defaultAnswers));
+                } else {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(data);
+                }
+            });
+            return;
+        }
+
+        if (req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => { body += chunk; });
+            req.on('end', () => {
+                try {
+                    const parsed = JSON.parse(body);
+                    if (!Array.isArray(parsed)) throw new Error("Answers must be an array");
+                    fs.writeFile(ANSWERS_FILE, JSON.stringify(parsed, null, 2), err => {
+                        if (err) {
+                            res.writeHead(500, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ error: 'Failed to save answers' }));
                         } else {
                             res.writeHead(200, { 'Content-Type': 'application/json' });
                             res.end(JSON.stringify({ success: true }));
