@@ -1,25 +1,154 @@
 // ==================================================
 // CAMPUS VOICE
 // Role-Based Announcement Portal (Student & Faculty)
+// With In-Website File Viewer (PDF.js + Click-to-Zoom Images)
 // ==================================================
 
 /* ==================================================
-   SECURITY ARCHITECTURE NOTE:
-   This is a front-end demonstration of role-based access
-   control (RBAC). In a production environment, role 
-   security, authentication, permissions, and database operations 
-   MUST be validated and enforced on a secure backend server 
-   (e.g., Firebase Auth / Firestore Rules or a Node.js + Express 
-   API using verified JWT tokens) to prevent client-side inspection 
-   or manipulation via developer tools.
+   SECURITY & STORAGE ARCHITECTURE NOTES:
+   1. ROLE-BASED ACCESS CONTROL (RBAC):
+      This is a front-end demonstration of role-based access.
+      In a production system, role security, credentials, and 
+      permissions MUST be validated on a secure backend server 
+      (e.g., Firebase Auth or Node.js + JWT) to prevent client-side
+      tampering via browser developer tools.
+
+   2. INDEXEDDB FILE ATTACHMENTS:
+      IndexedDB stores files and images as Blobs locally inside
+      the user's browser sandbox on this device. Files are NOT 
+      synchronized across the internet or visible on other devices.
+      A real production deployment requires a cloud object store
+      (such as Firebase Storage, AWS S3, or Node.js + Multer).
 ================================================== */
 
 // Demo Faculty Passcode Constant
 const FACULTY_PASSCODE = "faculty123";
 
+// IndexedDB Configuration for Attachments
+const DB_NAME = "campusVoiceFiles";
+const DB_VERSION = 1;
+const STORE_NAME = "attachments";
+
+// Configure PDF.js Worker using pinned CDN version
+if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+}
+
 
 // ==================================================
-// 1. INITIAL DEMO DATA
+// 1. INDEXEDDB HELPERS (saveFile, getFile, deleteFile)
+// ==================================================
+
+function openDB() {
+    return new Promise(function (resolve, reject) {
+        try {
+            if (!window.indexedDB) {
+                reject(new Error("IndexedDB is not supported in this browser."));
+                return;
+            }
+
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+            request.onupgradeneeded = function (event) {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME);
+                }
+            };
+
+            request.onsuccess = function (event) {
+                resolve(event.target.result);
+            };
+
+            request.onerror = function (event) {
+                reject(event.target.error || new Error("Failed to open IndexedDB"));
+            };
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
+async function saveFile(id, file) {
+    try {
+        const db = await openDB();
+        return new Promise(function (resolve, reject) {
+            const tx = db.transaction(STORE_NAME, "readwrite");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.put(file, id);
+
+            req.onsuccess = function () {
+                resolve(true);
+            };
+
+            req.onerror = function () {
+                reject(req.error);
+            };
+        });
+    } catch (err) {
+        console.error("IndexedDB saveFile error:", err);
+        showToast("Storage error: Browser blocked file attachment.");
+        throw err;
+    }
+}
+
+async function getFile(id) {
+    if (!id) return null;
+    try {
+        const db = await openDB();
+        return new Promise(function (resolve, reject) {
+            const tx = db.transaction(STORE_NAME, "readonly");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.get(id);
+
+            req.onsuccess = function () {
+                resolve(req.result || null);
+            };
+
+            req.onerror = function () {
+                reject(req.error);
+            };
+        });
+    } catch (err) {
+        console.error("IndexedDB getFile error:", err);
+        showToast("Storage error: Unable to load attachment.");
+        return null;
+    }
+}
+
+async function deleteFile(id) {
+    if (!id) return;
+    try {
+        const db = await openDB();
+        return new Promise(function (resolve, reject) {
+            const tx = db.transaction(STORE_NAME, "readwrite");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.delete(id);
+
+            req.onsuccess = function () {
+                resolve(true);
+            };
+
+            req.onerror = function () {
+                reject(req.error);
+            };
+        });
+    } catch (err) {
+        console.error("IndexedDB deleteFile error:", err);
+    }
+}
+
+function formatFileSize(bytes) {
+    if (!bytes || bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+}
+
+
+// ==================================================
+// 2. INITIAL DEMO DATA
 // ==================================================
 
 const initialNotices = [
@@ -32,7 +161,8 @@ const initialNotices = [
         postedBy: null, // Demo notice: editable by all faculty
         authorRole: "faculty",
         date: "Sep 28, 2026",
-        upvotes: 64
+        upvotes: 64,
+        attachment: null
     },
     {
         id: 3,
@@ -43,7 +173,8 @@ const initialNotices = [
         postedBy: null, // Demo notice: editable by all faculty
         authorRole: "faculty",
         date: "Oct 8, 2026",
-        upvotes: 31
+        upvotes: 31,
+        attachment: null
     },
     {
         id: 2,
@@ -54,7 +185,8 @@ const initialNotices = [
         postedBy: null, // Demo notice: editable by all faculty
         authorRole: "faculty",
         date: "Sep 26, 2026",
-        upvotes: 49
+        upvotes: 49,
+        attachment: null
     },
     {
         id: 1,
@@ -65,16 +197,16 @@ const initialNotices = [
         postedBy: null, // Demo notice: editable by all faculty
         authorRole: "faculty",
         date: "Sep 25, 2026",
-        upvotes: 18
+        upvotes: 18,
+        attachment: null
     }
 ];
 
 
 // ==================================================
-// 2. DATA PERSISTENCE & LOCALSTORAGE HELPERS
+// 3. DATA PERSISTENCE & LOCALSTORAGE HELPERS
 // ==================================================
 
-// Load notices from localStorage or use initial demo notices
 const storedNotices = localStorage.getItem("campusNotices");
 let notices;
 if (storedNotices) {
@@ -118,21 +250,39 @@ function saveBookmarkedNoticeIds(ids) {
 
 
 // ==================================================
-// 3. APPLICATION STATE
+// 4. APPLICATION STATE
 // ==================================================
 
-// Single role tracking variable: "student", "faculty", or null
 let currentRole = localStorage.getItem("campusRole") || null;
 let campusUserName = localStorage.getItem("campusUserName") || "";
 
 let currentFilter = "All";
 let searchText = "";
 let currentSort = "latest";
-let editingNoticeId = null; // Holds notice ID when faculty is editing
+let editingNoticeId = null;
+
+// Modal File Picker State
+let currentAttachmentFile = null;
+let currentAttachmentMeta = null;
+let pendingDeletedAttachmentId = null;
+let previewObjectUrl = null;
+
+// File Viewer Modal State
+let currentViewerBlob = null;
+let currentViewerUrl = null;
+let currentViewerFileName = "";
+let currentViewerFileType = "";
+let currentViewerFileSize = 0;
+
+// PDF Rendering State
+let currentPdfDoc = null;
+let currentPdfZoom = 1.0;
+let pdfIntersectionObserver = null;
+const renderedPdfPages = new Set();
 
 
 // ==================================================
-// 4. DOM REFERENCES
+// 5. DOM REFERENCES
 // ==================================================
 
 // Role Selection Screen
@@ -185,6 +335,34 @@ const noticeAuthor = document.getElementById("noticeAuthor");
 const noticeDescription = document.getElementById("noticeDescription");
 const characterCount = document.getElementById("characterCount");
 
+// Attachment elements in create/edit modal
+const noticeAttachment = document.getElementById("noticeAttachment");
+const attachmentInputWrapper = document.getElementById("attachmentInputWrapper");
+const attachmentPreview = document.getElementById("attachmentPreview");
+const previewMediaContainer = document.getElementById("previewMediaContainer");
+const previewFileName = document.getElementById("previewFileName");
+const previewFileSize = document.getElementById("previewFileSize");
+const removeAttachmentBtn = document.getElementById("removeAttachmentBtn");
+
+// File Viewer Modal Elements
+const fileViewerModal = document.getElementById("fileViewerModal");
+const viewerFileIcon = document.getElementById("viewerFileIcon");
+const viewerFileName = document.getElementById("viewerFileName");
+const viewerFileSize = document.getElementById("viewerFileSize");
+const viewerPdfControls = document.getElementById("viewerPdfControls");
+const viewerZoomLevel = document.getElementById("viewerZoomLevel");
+const viewerZoomInBtn = document.getElementById("viewerZoomInBtn");
+const viewerZoomOutBtn = document.getElementById("viewerZoomOutBtn");
+const viewerPageIndicator = document.getElementById("viewerPageIndicator");
+const viewerDownloadBtn = document.getElementById("viewerDownloadBtn");
+const closeViewerBtn = document.getElementById("closeViewerBtn");
+const fileViewerBody = document.getElementById("fileViewerBody");
+const viewerLoadingSpinner = document.getElementById("viewerLoadingSpinner");
+const viewerErrorState = document.getElementById("viewerErrorState");
+const viewerErrorMessage = document.getElementById("viewerErrorMessage");
+const viewerErrorDownloadBtn = document.getElementById("viewerErrorDownloadBtn");
+const fileViewerContent = document.getElementById("fileViewerContent");
+
 // Toast
 const toast = document.getElementById("toast");
 const toastMessage = document.getElementById("toastMessage");
@@ -192,77 +370,63 @@ let toastTimeout = null;
 
 
 // ==================================================
-// 5. ROLE MANAGEMENT & APPLYROLE()
+// 6. ROLE MANAGEMENT & APPLYROLE()
 // ==================================================
 
 function applyRole() {
-    // Synchronize CSS body classes for declarative styling
     document.body.classList.remove("role-student", "role-faculty");
 
     if (!currentRole) {
-        // If no role is selected, show role selection overlay
         if (roleScreen) roleScreen.classList.remove("hidden");
         return;
     }
 
-    // Role is chosen; hide the role overlay
     if (roleScreen) roleScreen.classList.add("hidden");
 
     if (currentRole === "faculty") {
         document.body.classList.add("role-faculty");
 
-        // Update role badge in header
         if (roleBadge) {
             roleBadge.className = "text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-400/50 flex items-center gap-1.5";
             roleBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Faculty${campusUserName ? ': <span class="text-white normal-case font-bold">' + escapeHtml(campusUserName) + '</span>' : ''}`;
         }
 
-        // Hero texts for faculty
         if (heroTitle) heroTitle.textContent = "Manage and publish campus announcements.";
         if (heroSubtitle) heroSubtitle.textContent = "Official faculty portal for college circulars, exams, and event notices.";
 
-        // Explicitly update interface visibility
         if (openModalBtn) openModalBtn.classList.remove("hidden");
         if (facultyDashboard) facultyDashboard.classList.remove("hidden");
         if (savedFilterPill) savedFilterPill.classList.add("hidden");
 
-        // If faculty was previously on the student "Saved" filter, reset to "All"
         if (currentFilter === "Saved") {
             currentFilter = "All";
             resetActiveFilterPill("All");
         }
 
-        // Refresh faculty dashboard metrics
         updateFacultyDashboard();
 
     } else if (currentRole === "student") {
         document.body.classList.add("role-student");
 
-        // Update role badge in header
         if (roleBadge) {
             roleBadge.className = "text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider bg-indigo-700/70 text-indigo-200 border border-indigo-500/50 flex items-center gap-1.5";
             roleBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Student`;
         }
 
-        // Hero texts for student
         if (heroTitle) heroTitle.textContent = "What's happening on campus?";
         if (heroSubtitle) heroSubtitle.textContent = "Search, explore and share important campus updates.";
 
-        // Hide faculty controls from student
         if (openModalBtn) openModalBtn.classList.add("hidden");
         if (facultyDashboard) facultyDashboard.classList.add("hidden");
         if (savedFilterPill) savedFilterPill.classList.remove("hidden");
     }
 
-    // Re-render notices with role-appropriate card buttons
     renderNotices();
 }
 
 function updateFacultyDashboard() {
     if (currentRole !== "faculty") return;
 
-    // A notice is considered "posted by me" if postedBy matches the faculty name,
-    // or if it is a pre-existing demo notice without a specific faculty owner.
     const myNotices = notices.filter(function (notice) {
         return !notice.postedBy || notice.postedBy === campusUserName;
     });
@@ -293,7 +457,6 @@ function updateFacultyDashboard() {
 
 function canFacultyEdit(notice) {
     if (currentRole !== "faculty") return false;
-    // Rule: treat existing demo notices (without postedBy) as editable by any faculty member
     if (!notice.postedBy) return true;
     return notice.postedBy === campusUserName;
 }
@@ -311,10 +474,9 @@ function resetActiveFilterPill(activeCategory) {
 
 
 // ==================================================
-// 6. ROLE SELECTION EVENT LISTENERS
+// 7. ROLE SELECTION EVENT LISTENERS
 // ==================================================
 
-// Student role selection
 selectStudentBtn.addEventListener("click", function () {
     currentRole = "student";
     campusUserName = "";
@@ -324,7 +486,6 @@ selectStudentBtn.addEventListener("click", function () {
     showToast("Welcome, Student! Accessing notice board.");
 });
 
-// Faculty role selection with passcode verification
 selectFacultyBtn.addEventListener("click", function () {
     const enteredPasscode = facultyPasscode.value.trim();
     const enteredName = facultyNameInput.value.trim();
@@ -344,7 +505,6 @@ selectFacultyBtn.addEventListener("click", function () {
     localStorage.setItem("campusRole", "faculty");
     localStorage.setItem("campusUserName", resolvedName);
 
-    // Clear login inputs for cleanliness
     facultyPasscode.value = "";
     facultyNameInput.value = "";
 
@@ -352,25 +512,22 @@ selectFacultyBtn.addEventListener("click", function () {
     showToast(`Welcome, ${resolvedName}! Faculty privileges enabled.`);
 });
 
-// Allow Enter key to submit faculty passcode
 facultyPasscode.addEventListener("keydown", function (e) {
     if (e.key === "Enter") {
         selectFacultyBtn.click();
     }
 });
 
-// Logout / Switch role
 switchRoleBtn.addEventListener("click", function () {
     currentRole = null;
     campusUserName = "";
     localStorage.removeItem("campusRole");
     localStorage.removeItem("campusUserName");
-    
-    // Clear any active editing session
+
     editingNoticeId = null;
     closeModal();
+    closeFileViewer();
 
-    // Reset error state
     if (facultyError) facultyError.classList.add("hidden");
     if (facultyPasscode) facultyPasscode.value = "";
     if (facultyNameInput) facultyNameInput.value = "";
@@ -381,7 +538,122 @@ switchRoleBtn.addEventListener("click", function () {
 
 
 // ==================================================
-// 7. CATEGORY STYLE HELPER
+// 8. ATTACHMENT MODAL HELPERS & PREVIEW
+// ==================================================
+
+function isPreviewable(fileType, fileName) {
+    const isImg = (fileType && fileType.startsWith("image/")) || /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(fileName || "");
+    const isPdf = fileType === "application/pdf" || /\.pdf$/i.test(fileName || "");
+    return isImg || isPdf;
+}
+
+function getFileIcon(fileName, fileType) {
+    const name = (fileName || "").toLowerCase();
+    const type = (fileType || "").toLowerCase();
+
+    if (type.startsWith("image/") || /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(name)) return "🖼️";
+    if (type === "application/pdf" || name.endsWith(".pdf")) return "📕";
+    if (name.match(/\.(doc|docx)$/i)) return "📘";
+    if (name.match(/\.(ppt|pptx)$/i)) return "📙";
+    if (name.match(/\.(xls|xlsx)$/i)) return "📗";
+    if (name.match(/\.zip$/i)) return "🗜️";
+    return "📄";
+}
+
+function renderAttachmentPreview(fileOrBlob, meta) {
+    if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = null;
+    }
+
+    attachmentPreview.classList.remove("hidden");
+    attachmentInputWrapper.classList.add("hidden");
+
+    previewFileName.textContent = meta.name;
+    previewFileSize.textContent = formatFileSize(meta.size);
+    previewMediaContainer.innerHTML = "";
+
+    const isImage = meta.type.startsWith("image/") || /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(meta.name);
+    if (isImage) {
+        if (fileOrBlob instanceof Blob || fileOrBlob instanceof File) {
+            previewObjectUrl = URL.createObjectURL(fileOrBlob);
+            const img = document.createElement("img");
+            img.src = previewObjectUrl;
+            img.alt = meta.name;
+            img.className = "w-full h-full object-cover";
+            previewMediaContainer.appendChild(img);
+        } else {
+            // Existing attachment in edit mode: fetch from IndexedDB to show preview
+            previewMediaContainer.innerHTML = '<span class="text-base">🖼️</span>';
+            getFile(meta.id).then(function (blob) {
+                if (blob && !attachmentPreview.classList.contains("hidden")) {
+                    previewObjectUrl = URL.createObjectURL(blob);
+                    previewMediaContainer.innerHTML = "";
+                    const img = document.createElement("img");
+                    img.src = previewObjectUrl;
+                    img.alt = meta.name;
+                    img.className = "w-full h-full object-cover";
+                    previewMediaContainer.appendChild(img);
+                }
+            });
+        }
+    } else {
+        const icon = getFileIcon(meta.name, meta.type);
+        previewMediaContainer.innerHTML = `<span class="text-xl">${icon}</span>`;
+    }
+}
+
+function resetAttachmentInput() {
+    if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = null;
+    }
+    currentAttachmentFile = null;
+    currentAttachmentMeta = null;
+    if (noticeAttachment) noticeAttachment.value = "";
+    if (attachmentPreview) attachmentPreview.classList.add("hidden");
+    if (attachmentInputWrapper) attachmentInputWrapper.classList.remove("hidden");
+    if (previewMediaContainer) previewMediaContainer.innerHTML = "";
+}
+
+// File picker event handler
+noticeAttachment.addEventListener("change", function (e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const MAX_SIZE = 10 * 1024 * 1024; // 10 MB limit
+    if (file.size > MAX_SIZE) {
+        showToast("File must be 10 MB or less");
+        noticeAttachment.value = "";
+        return;
+    }
+
+    if (currentAttachmentMeta && !currentAttachmentFile && currentAttachmentMeta.id) {
+        pendingDeletedAttachmentId = currentAttachmentMeta.id;
+    }
+
+    currentAttachmentFile = file;
+    currentAttachmentMeta = {
+        id: "file_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9),
+        name: file.name,
+        type: file.type || "application/octet-stream",
+        size: file.size
+    };
+
+    renderAttachmentPreview(currentAttachmentFile, currentAttachmentMeta);
+});
+
+// Remove attachment button
+removeAttachmentBtn.addEventListener("click", function () {
+    if (currentAttachmentMeta && !currentAttachmentFile && currentAttachmentMeta.id) {
+        pendingDeletedAttachmentId = currentAttachmentMeta.id;
+    }
+    resetAttachmentInput();
+});
+
+
+// ==================================================
+// 9. CATEGORY STYLE & HTML / JS ESCAPING
 // ==================================================
 
 function getCategoryStyle(category) {
@@ -410,9 +682,19 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
+function escapeJs(text) {
+    if (!text) return "";
+    return String(text)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, "\\n")
+        .replace(/\r/g, "\\r");
+}
+
 
 // ==================================================
-// 8. MAIN RENDER FUNCTION
+// 10. MAIN RENDER FUNCTION
 // ==================================================
 
 function renderNotices() {
@@ -420,9 +702,7 @@ function renderNotices() {
     const upvotedIds = getUpvotedNoticeIds();
     const bookmarkedIds = getBookmarkedNoticeIds();
 
-    // ----------------------------------------------
-    // CATEGORY FILTER
-    // ----------------------------------------------
+    // Category Filter
     if (currentFilter === "Saved") {
         filteredNotices = filteredNotices.filter(function (notice) {
             return bookmarkedIds.includes(notice.id);
@@ -433,9 +713,7 @@ function renderNotices() {
         });
     }
 
-    // ----------------------------------------------
-    // SEARCH FILTER
-    // ----------------------------------------------
+    // Search Filter
     if (searchText !== "") {
         const query = searchText.toLowerCase();
         filteredNotices = filteredNotices.filter(function (notice) {
@@ -446,23 +724,18 @@ function renderNotices() {
         });
     }
 
-    // ----------------------------------------------
-    // SORTING
-    // ----------------------------------------------
+    // Sorting
     if (currentSort === "upvotes") {
         filteredNotices.sort(function (a, b) {
             return (b.upvotes || 0) - (a.upvotes || 0);
         });
     } else {
-        // Latest first by ID
         filteredNotices.sort(function (a, b) {
             return b.id - a.id;
         });
     }
 
-    // ----------------------------------------------
-    // STATS UPDATE
-    // ----------------------------------------------
+    // Stats
     if (totalCount) totalCount.textContent = notices.length;
 
     const trendingNotices = notices.filter(function (notice) {
@@ -470,9 +743,7 @@ function renderNotices() {
     });
     if (trendingCount) trendingCount.textContent = trendingNotices.length;
 
-    // ----------------------------------------------
-    // EMPTY STATE HANDLING
-    // ----------------------------------------------
+    // Empty State
     if (filteredNotices.length === 0) {
         cardsGrid.innerHTML = "";
         emptyState.classList.remove("hidden");
@@ -489,23 +760,19 @@ function renderNotices() {
 
     emptyState.classList.add("hidden");
 
-    // ----------------------------------------------
-    // GENERATE ROLE-AWARE NOTICE CARDS
-    // ----------------------------------------------
+    // Generate Notice Cards
     const cards = filteredNotices.map(function (notice) {
         const categoryStyle = getCategoryStyle(notice.category);
 
-        // Trending Badge (30+ upvotes)
         let trendingBadge = "";
         if ((notice.upvotes || 0) >= 30) {
             trendingBadge = `
-                <span class="text-[10px] font-bold bg-orange-50 text-orange-600 border border-orange-200 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+                <span class="text-[10px] font-bold bg-orange-50 text-orange-600 border border-orange-200 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
                     🔥 TRENDING
                 </span>
             `;
         }
 
-        // Author & Origin Label
         let facultyBadge = "";
         if (notice.postedBy) {
             facultyBadge = `
@@ -515,11 +782,80 @@ function renderNotices() {
             `;
         }
 
-        // ROLE-AWARE CARD ACTIONS:
+        // Attachment Slot with "👁 View" and "⬇ Download" buttons (No auto-download on click)
+        let attachmentSlotHtml = "";
+        if (notice.attachment && notice.attachment.id) {
+            const canPreview = isPreviewable(notice.attachment.type, notice.attachment.name);
+            const icon = getFileIcon(notice.attachment.name, notice.attachment.type);
+
+            let actionButtonsHtml = "";
+
+            if (canPreview) {
+                actionButtonsHtml = `
+                    <div class="flex items-center gap-2 pt-2 border-t border-slate-200/70">
+                        <button
+                            onclick="openFileViewer('${escapeHtml(notice.attachment.id)}', '${escapeJs(notice.attachment.name)}', '${escapeJs(notice.attachment.type)}', ${notice.attachment.size})"
+                            type="button"
+                            class="flex-1 bg-white hover:bg-indigo-50 text-brand-700 hover:text-brand-800 border border-slate-200 hover:border-indigo-300 font-semibold text-xs py-1.5 px-3 rounded-lg transition flex items-center justify-center gap-1 shadow-2xs"
+                            title="Preview file inside website"
+                        >
+                            <span>👁</span>
+                            <span>View</span>
+                        </button>
+
+                        <button
+                            onclick="downloadAttachment('${escapeHtml(notice.attachment.id)}', '${escapeJs(notice.attachment.name)}')"
+                            type="button"
+                            class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-3 rounded-lg transition flex items-center justify-center gap-1 shadow-2xs"
+                            title="Download original file"
+                        >
+                            <span>⬇</span>
+                            <span>Download</span>
+                        </button>
+                    </div>
+                `;
+            } else {
+                // Non-previewable (Word, PPT, Excel, ZIP): View is hidden, Download is shown with note
+                actionButtonsHtml = `
+                    <div class="pt-2 border-t border-slate-200/70">
+                        <p class="text-[10px] text-slate-400 italic mb-1.5">
+                            Preview not available for this file type
+                        </p>
+                        <button
+                            onclick="downloadAttachment('${escapeHtml(notice.attachment.id)}', '${escapeJs(notice.attachment.name)}')"
+                            type="button"
+                            class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-1.5 px-3 rounded-lg transition flex items-center justify-center gap-1 shadow-2xs"
+                            title="Download original file"
+                        >
+                            <span>⬇</span>
+                            <span>Download (${formatFileSize(notice.attachment.size)})</span>
+                        </button>
+                    </div>
+                `;
+            }
+
+            attachmentSlotHtml = `
+                <div class="notice-attachment-slot mt-3 border border-slate-200 bg-slate-50/80 rounded-xl p-2.5">
+                    <div class="flex items-center gap-2 overflow-hidden mb-2">
+                        <span class="text-xl flex-shrink-0">${icon}</span>
+                        <div class="overflow-hidden">
+                            <span class="text-xs font-semibold text-slate-800 truncate block">
+                                ${escapeHtml(notice.attachment.name)}
+                            </span>
+                            <span class="text-[10px] text-slate-400">
+                                ${formatFileSize(notice.attachment.size)}
+                            </span>
+                        </div>
+                    </div>
+                    ${actionButtonsHtml}
+                </div>
+            `;
+        }
+
+        // Role-Aware Card Actions
         let cardActionsHtml = "";
 
         if (currentRole === "student") {
-            // Student: Single Upvote + Bookmark
             const isUpvoted = upvotedIds.includes(notice.id);
             const isBookmarked = bookmarkedIds.includes(notice.id);
 
@@ -557,7 +893,6 @@ function renderNotices() {
                 </div>
             `;
         } else if (currentRole === "faculty") {
-            // Faculty: Upvote Count + Edit & Delete (if owned or demo notice)
             const isEditable = canFacultyEdit(notice);
 
             let editDeleteButtons = "";
@@ -604,7 +939,7 @@ function renderNotices() {
         }
 
         return `
-            <article class="notice-card bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+            <article class="notice-card bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs flex flex-col justify-between">
                 <div>
                     <!-- Category & Trending Header -->
                     <div class="flex items-center justify-between gap-2 mb-3">
@@ -628,6 +963,9 @@ function renderNotices() {
                     <p class="text-sm text-slate-600 mt-2.5 leading-relaxed">
                         ${escapeHtml(notice.description)}
                     </p>
+
+                    <!-- Attachment Slot -->
+                    ${attachmentSlotHtml}
                 </div>
 
                 <div>
@@ -656,7 +994,333 @@ function renderNotices() {
 
 
 // ==================================================
-// 9. STUDENT FEATURES (UPVOTE & BOOKMARKS)
+// 11. IN-WEBSITE FILE VIEWER (PDF.JS + IMAGE VIEWER)
+// ==================================================
+
+async function openFileViewer(fileId, fileName, fileType, fileSize) {
+    currentViewerFileName = fileName;
+    currentViewerFileType = fileType;
+    currentViewerFileSize = fileSize;
+
+    // Set header information
+    viewerFileName.textContent = fileName;
+    viewerFileSize.textContent = formatFileSize(fileSize);
+    viewerFileIcon.textContent = getFileIcon(fileName, fileType);
+
+    // Reset Viewer states
+    fileViewerContent.innerHTML = "";
+    fileViewerContent.classList.add("hidden");
+    viewerErrorState.classList.add("hidden");
+    viewerPdfControls.classList.add("hidden");
+    viewerPdfControls.classList.remove("flex");
+    viewerLoadingSpinner.classList.remove("hidden");
+
+    // Open Modal
+    fileViewerModal.classList.remove("hidden");
+    fileViewerModal.classList.add("flex");
+
+    try {
+        const blob = await getFile(fileId);
+
+        if (!blob) {
+            showViewerError("File not found in local browser storage on this device.");
+            return;
+        }
+
+        currentViewerBlob = blob;
+        currentViewerUrl = URL.createObjectURL(blob);
+
+        const isImage = (fileType && fileType.startsWith("image/")) || /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(fileName);
+        const isPdf = fileType === "application/pdf" || /\.pdf$/i.test(fileName);
+
+        if (isImage) {
+            renderImageViewer(blob, fileName);
+        } else if (isPdf) {
+            await renderPdfViewer(blob);
+        } else {
+            showViewerError("Preview not available for this file type. Please download the file to view.");
+        }
+
+    } catch (err) {
+        console.error("Error opening file viewer:", err);
+        showViewerError("An unexpected error occurred while loading this attachment.");
+    }
+}
+
+function renderImageViewer(blob, fileName) {
+    fileViewerContent.innerHTML = "";
+    fileViewerContent.className = "w-full h-full flex flex-col items-center justify-center p-2 relative";
+
+    const img = document.createElement("img");
+    img.src = currentViewerUrl;
+    img.alt = fileName;
+    img.className = "max-h-[80vh] max-w-full object-contain rounded-xl cursor-zoom-in transition-all duration-200 select-none shadow-xl";
+    img.title = "Click to zoom in / fit screen";
+
+    let isZoomed = false;
+    img.addEventListener("click", function (e) {
+        e.stopPropagation();
+        isZoomed = !isZoomed;
+        if (isZoomed) {
+            img.className = "max-w-none w-auto cursor-zoom-out transition-all duration-200 select-none shadow-2xl my-auto";
+            showToast("Zoomed in. Click again to fit screen.");
+        } else {
+            img.className = "max-h-[80vh] max-w-full object-contain rounded-xl cursor-zoom-in transition-all duration-200 select-none shadow-xl";
+        }
+    });
+
+    const hint = document.createElement("p");
+    hint.className = "text-[11px] text-slate-400 mt-2 text-center pointer-events-none";
+    hint.textContent = "💡 Click image to zoom in / fit screen";
+
+    fileViewerContent.appendChild(img);
+    fileViewerContent.appendChild(hint);
+
+    viewerLoadingSpinner.classList.add("hidden");
+    fileViewerContent.classList.remove("hidden");
+}
+
+async function renderPdfViewer(blob) {
+    viewerPdfControls.classList.remove("hidden");
+    viewerPdfControls.classList.add("flex");
+    fileViewerContent.innerHTML = "";
+    fileViewerContent.className = "w-full max-w-3xl flex flex-col items-center justify-start py-4";
+
+    renderedPdfPages.clear();
+    currentPdfZoom = 1.0;
+    updateZoomDisplay();
+
+    try {
+        const arrayBuffer = await blob.arrayBuffer();
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+        currentPdfDoc = await loadingTask.promise;
+
+        const totalPages = currentPdfDoc.numPages;
+        viewerPageIndicator.textContent = `Page 1 / ${totalPages}`;
+
+        // Create lazy skeleton containers for each page
+        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+            const pageContainer = document.createElement("div");
+            pageContainer.className = "pdf-page-container mb-6 bg-white rounded-lg shadow-md overflow-hidden relative w-full flex items-center justify-center";
+            pageContainer.dataset.pageNumber = pageNum;
+            pageContainer.style.minHeight = "450px";
+
+            pageContainer.innerHTML = `
+                <div class="pdf-skeleton text-xs text-slate-400 py-20 flex flex-col items-center gap-2">
+                    <span class="inline-block w-5 h-5 border-2 border-slate-300 border-t-brand-500 rounded-full animate-spin"></span>
+                    <span>Loading Page ${pageNum}...</span>
+                </div>
+            `;
+
+            fileViewerContent.appendChild(pageContainer);
+        }
+
+        viewerLoadingSpinner.classList.add("hidden");
+        fileViewerContent.classList.remove("hidden");
+
+        // Initialize IntersectionObserver for lazy PDF rendering
+        setupPdfIntersectionObserver();
+
+    } catch (pdfErr) {
+        console.error("PDF.js render error:", pdfErr);
+        showViewerError("Could not render PDF document. The file might be corrupted or format unsupported.");
+    }
+}
+
+function setupPdfIntersectionObserver() {
+    if (pdfIntersectionObserver) {
+        pdfIntersectionObserver.disconnect();
+    }
+
+    pdfIntersectionObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            const pageNum = Number(entry.target.dataset.pageNumber);
+            if (entry.isIntersecting) {
+                if (currentPdfDoc) {
+                    viewerPageIndicator.textContent = `Page ${pageNum} / ${currentPdfDoc.numPages}`;
+                }
+
+                if (!renderedPdfPages.has(pageNum)) {
+                    renderPdfPage(pageNum, entry.target);
+                }
+            }
+        });
+    }, {
+        root: fileViewerBody,
+        rootMargin: "250px 0px 250px 0px",
+        threshold: 0.1
+    });
+
+    const containers = fileViewerContent.querySelectorAll(".pdf-page-container");
+    containers.forEach(function (el) {
+        pdfIntersectionObserver.observe(el);
+    });
+}
+
+async function renderPdfPage(pageNum, container) {
+    if (!currentPdfDoc) return;
+    renderedPdfPages.add(pageNum);
+
+    try {
+        const page = await currentPdfDoc.getPage(pageNum);
+        const unscaledViewport = page.getViewport({ scale: 1 });
+
+        // Scaled to fit container width, mobile friendly
+        const availableWidth = Math.min(fileViewerBody.clientWidth - 48, 850);
+        const fitScale = (availableWidth / unscaledViewport.width) * currentPdfZoom;
+        const viewport = page.getViewport({ scale: fitScale });
+
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderContext = {
+            canvasContext: context,
+            viewport: viewport
+        };
+
+        container.innerHTML = "";
+        container.style.minHeight = "auto";
+        container.appendChild(canvas);
+
+        await page.render(renderContext).promise;
+    } catch (err) {
+        console.error(`Error rendering page ${pageNum}:`, err);
+        container.innerHTML = `<div class="p-8 text-xs text-rose-500">Error loading page ${pageNum}</div>`;
+    }
+}
+
+function rerenderAllVisiblePdfPages() {
+    if (!currentPdfDoc) return;
+    renderedPdfPages.clear();
+    const containers = fileViewerContent.querySelectorAll(".pdf-page-container");
+    containers.forEach(function (container) {
+        const pageNum = Number(container.dataset.pageNumber);
+        renderPdfPage(pageNum, container);
+    });
+}
+
+function updateZoomDisplay() {
+    viewerZoomLevel.textContent = `${Math.round(currentPdfZoom * 100)}%`;
+}
+
+function showViewerError(msg) {
+    viewerLoadingSpinner.classList.add("hidden");
+    fileViewerContent.classList.add("hidden");
+    viewerPdfControls.classList.add("hidden");
+    viewerPdfControls.classList.remove("flex");
+
+    viewerErrorMessage.textContent = msg;
+    viewerErrorState.classList.remove("hidden");
+}
+
+function closeFileViewer() {
+    fileViewerModal.classList.add("hidden");
+    fileViewerModal.classList.remove("flex");
+    fileViewerContent.innerHTML = "";
+    fileViewerContent.classList.add("hidden");
+    viewerPdfControls.classList.add("hidden");
+    viewerPdfControls.classList.remove("flex");
+    viewerErrorState.classList.add("hidden");
+
+    if (pdfIntersectionObserver) {
+        pdfIntersectionObserver.disconnect();
+        pdfIntersectionObserver = null;
+    }
+
+    renderedPdfPages.clear();
+    currentPdfDoc = null;
+
+    if (currentViewerUrl) {
+        URL.revokeObjectURL(currentViewerUrl);
+        currentViewerUrl = null;
+    }
+
+    currentViewerBlob = null;
+    currentViewerFileName = "";
+    currentViewerFileType = "";
+    currentViewerFileSize = 0;
+}
+
+// Download Helper using standard <a download> element
+function triggerBlobDownload(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName || "download";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () {
+        URL.revokeObjectURL(url);
+    }, 5000);
+    showToast("Download started!");
+}
+
+async function downloadAttachment(fileId, fileName) {
+    try {
+        const blob = await getFile(fileId);
+        if (!blob) {
+            showToast("Attachment not found on this device.");
+            return;
+        }
+        triggerBlobDownload(blob, fileName);
+    } catch (err) {
+        console.error("Error downloading attachment:", err);
+        showToast("Failed to download file.");
+    }
+}
+
+// Viewer Header Controls Event Listeners
+closeViewerBtn.addEventListener("click", closeFileViewer);
+
+viewerDownloadBtn.addEventListener("click", function () {
+    if (currentViewerBlob && currentViewerFileName) {
+        triggerBlobDownload(currentViewerBlob, currentViewerFileName);
+    }
+});
+
+viewerErrorDownloadBtn.addEventListener("click", function () {
+    if (currentViewerBlob && currentViewerFileName) {
+        triggerBlobDownload(currentViewerBlob, currentViewerFileName);
+    }
+});
+
+viewerZoomInBtn.addEventListener("click", function () {
+    if (currentPdfZoom >= 2.5) return;
+    currentPdfZoom = Math.min(2.5, currentPdfZoom + 0.25);
+    updateZoomDisplay();
+    rerenderAllVisiblePdfPages();
+});
+
+viewerZoomOutBtn.addEventListener("click", function () {
+    if (currentPdfZoom <= 0.5) return;
+    currentPdfZoom = Math.max(0.5, currentPdfZoom - 0.25);
+    updateZoomDisplay();
+    rerenderAllVisiblePdfPages();
+});
+
+// Close viewer on Escape or clicking backdrop
+document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+        if (!fileViewerModal.classList.contains("hidden")) {
+            closeFileViewer();
+        } else if (!noticeModal.classList.contains("hidden")) {
+            closeModal();
+        }
+    }
+});
+
+fileViewerModal.addEventListener("click", function (event) {
+    if (event.target === fileViewerModal || event.target === fileViewerBody) {
+        closeFileViewer();
+    }
+});
+
+
+// ==================================================
+// 12. STUDENT FEATURES (UPVOTE & BOOKMARKS)
 // ==================================================
 
 function upvoteNotice(id) {
@@ -673,13 +1337,11 @@ function upvoteNotice(id) {
             return;
         }
 
-        // Increase upvote count
         selectedNotice.upvotes = (Number(selectedNotice.upvotes) || 0) + 1;
         upvotedIds.push(id);
         saveUpvotedNoticeIds(upvotedIds);
 
     } else if (currentRole === "faculty") {
-        // Faculty can upvote notices freely
         selectedNotice.upvotes = (Number(selectedNotice.upvotes) || 0) + 1;
         updateFacultyDashboard();
     } else {
@@ -693,7 +1355,6 @@ function upvoteNotice(id) {
 }
 
 function toggleBookmark(id) {
-    // Security check: Only students can manage bookmarks
     if (currentRole !== "student") {
         showToast("Bookmarks are available in Student mode.");
         return;
@@ -719,24 +1380,23 @@ function toggleBookmark(id) {
 
 
 // ==================================================
-// 10. FACULTY NOTICE MANAGEMENT (CREATE, EDIT, DELETE)
+// 13. FACULTY NOTICE MANAGEMENT (CREATE, EDIT, DELETE)
 // ==================================================
 
 function openModal() {
-    // Security check
     if (currentRole !== "faculty") {
         showToast("Access denied: Only faculty members can post announcements.");
         return;
     }
 
     if (!editingNoticeId) {
-        // Create Mode
         noticeForm.reset();
         modalTitle.textContent = "Post New Notice";
         modalSubmitBtn.textContent = "Publish Notice";
-        // Auto-fill faculty author/department
         noticeAuthor.value = campusUserName || "";
         characterCount.textContent = "0 / 250";
+        resetAttachmentInput();
+        pendingDeletedAttachmentId = null;
     }
 
     noticeModal.classList.remove("hidden");
@@ -748,16 +1408,17 @@ function closeModal() {
     noticeModal.classList.add("hidden");
     noticeModal.classList.remove("flex");
 
-    // Reset editing state and form
     editingNoticeId = null;
     noticeForm.reset();
     characterCount.textContent = "0 / 250";
     modalTitle.textContent = "Post New Notice";
     modalSubmitBtn.textContent = "Publish Notice";
+
+    resetAttachmentInput();
+    pendingDeletedAttachmentId = null;
 }
 
 function editNotice(id) {
-    // Security check
     if (currentRole !== "faculty") {
         showToast("Access denied: Only faculty can edit notices.");
         return;
@@ -784,13 +1445,22 @@ function editNotice(id) {
     noticeDescription.value = notice.description;
     characterCount.textContent = `${notice.description.length} / 250`;
 
+    // Handle existing attachment in edit mode
+    pendingDeletedAttachmentId = null;
+    if (notice.attachment && notice.attachment.id) {
+        currentAttachmentMeta = { ...notice.attachment };
+        currentAttachmentFile = null;
+        renderAttachmentPreview(null, currentAttachmentMeta);
+    } else {
+        resetAttachmentInput();
+    }
+
     noticeModal.classList.remove("hidden");
     noticeModal.classList.add("flex");
     noticeTitle.focus();
 }
 
-function deleteNotice(id) {
-    // Security check
+async function deleteNotice(id) {
     if (currentRole !== "faculty") {
         showToast("Access denied: Only faculty can delete notices.");
         return;
@@ -810,7 +1480,14 @@ function deleteNotice(id) {
     const confirmed = window.confirm(`Are you sure you want to delete the notice "${notice.title}"?`);
     if (!confirmed) return;
 
-    // Remove from notices array
+    if (notice.attachment && notice.attachment.id) {
+        try {
+            await deleteFile(notice.attachment.id);
+        } catch (e) {
+            console.error("Error deleting attachment from IndexedDB:", e);
+        }
+    }
+
     notices = notices.filter(function (n) {
         return n.id !== id;
     });
@@ -822,10 +1499,9 @@ function deleteNotice(id) {
 }
 
 // Notice Form Submit (handles both Publish and Edit)
-noticeForm.addEventListener("submit", function (event) {
+noticeForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
-    // Security check
     if (currentRole !== "faculty") {
         showToast("Access denied: Only faculty can publish or edit notices.");
         return;
@@ -839,6 +1515,30 @@ noticeForm.addEventListener("submit", function (event) {
     if (!title || !author || !description) {
         showToast("Please complete all required fields.");
         return;
+    }
+
+    try {
+        if (pendingDeletedAttachmentId) {
+            await deleteFile(pendingDeletedAttachmentId);
+            pendingDeletedAttachmentId = null;
+        }
+
+        if (currentAttachmentFile && currentAttachmentMeta) {
+            await saveFile(currentAttachmentMeta.id, currentAttachmentFile);
+        }
+    } catch (storageErr) {
+        console.error("Attachment storage error:", storageErr);
+        showToast("Storage error: Failed to save attachment to IndexedDB.");
+    }
+
+    let finalAttachmentMeta = null;
+    if (currentAttachmentMeta) {
+        finalAttachmentMeta = {
+            id: currentAttachmentMeta.id,
+            name: currentAttachmentMeta.name,
+            type: currentAttachmentMeta.type,
+            size: currentAttachmentMeta.size
+        };
     }
 
     if (editingNoticeId) {
@@ -858,6 +1558,7 @@ noticeForm.addEventListener("submit", function (event) {
             existingNotice.category = category;
             existingNotice.author = author;
             existingNotice.description = description;
+            existingNotice.attachment = finalAttachmentMeta;
 
             saveNotices();
             updateFacultyDashboard();
@@ -880,7 +1581,8 @@ noticeForm.addEventListener("submit", function (event) {
                 day: "numeric",
                 year: "numeric"
             }),
-            upvotes: 0
+            upvotes: 0,
+            attachment: finalAttachmentMeta
         };
 
         notices.unshift(newNotice);
@@ -894,15 +1596,13 @@ noticeForm.addEventListener("submit", function (event) {
 
 
 // ==================================================
-// 11. SEARCH, SORT & FILTER EVENTS
+// 14. SEARCH, SORT & FILTER EVENTS
 // ==================================================
 
-// Category filter container click
 filterContainer.addEventListener("click", function (event) {
     const pill = event.target.closest(".filter-pill");
     if (!pill) return;
 
-    // Update active pill styling
     const allPills = filterContainer.querySelectorAll(".filter-pill");
     allPills.forEach(function (btn) {
         btn.classList.remove("active-pill");
@@ -913,13 +1613,11 @@ filterContainer.addEventListener("click", function (event) {
     renderNotices();
 });
 
-// Search input
 searchInput.addEventListener("input", function (event) {
     searchText = event.target.value.trim();
     renderNotices();
 });
 
-// Clear search
 clearSearchBtn.addEventListener("click", function () {
     searchInput.value = "";
     searchText = "";
@@ -927,40 +1625,29 @@ clearSearchBtn.addEventListener("click", function () {
     searchInput.focus();
 });
 
-// Sort select
 sortSelect.addEventListener("change", function (event) {
     currentSort = event.target.value;
     renderNotices();
 });
 
-// Modal toggle button events
 openModalBtn.addEventListener("click", openModal);
 closeModalBtn.addEventListener("click", closeModal);
 cancelModalBtn.addEventListener("click", closeModal);
 
-// Character counter on description textarea
 noticeDescription.addEventListener("input", function (event) {
     const len = event.target.value.length;
     characterCount.textContent = `${len} / 250`;
 });
 
-// Close modal when clicking on the dark backdrop
 noticeModal.addEventListener("click", function (event) {
     if (event.target === noticeModal) {
         closeModal();
     }
 });
 
-// Close modal on Escape key
-document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && !noticeModal.classList.contains("hidden")) {
-        closeModal();
-    }
-});
-
 
 // ==================================================
-// 12. TOAST NOTIFICATION
+// 15. TOAST NOTIFICATION
 // ==================================================
 
 function showToast(message) {
@@ -978,10 +1665,8 @@ function showToast(message) {
 
 
 // ==================================================
-// 13. INITIAL APPLICATION BOOTSTRAP
+// 16. INITIAL APPLICATION BOOTSTRAP
 // ==================================================
 
-console.log("Campus Voice Portal Loaded with RBAC");
-
-// Apply current role from localStorage, or prompt for role selection
+console.log("Campus Voice Portal Loaded with RBAC & In-Website File Viewer");
 applyRole();

@@ -44,6 +44,15 @@
     box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
 }
 
+/* Attachment Card Media */
+.notice-attachment-slot img {
+    transition: transform 0.25s ease;
+}
+
+.notice-attachment-slot:hover img {
+    transform: scale(1.02);
+}
+
 /* Form Controls */
 .form-control {
     width: 100%;
@@ -76,6 +85,39 @@
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+}
+
+/* File Viewer Modal Elements */
+#fileViewerModal {
+    animation: viewerFadeIn 0.2s ease-out;
+}
+
+@keyframes viewerFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.pdf-page-container {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease;
+}
+
+.pdf-page-container canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.cursor-zoom-in {
+    cursor: zoom-in;
+}
+
+.cursor-zoom-out {
+    cursor: zoom-out;
 }
 
 /* Role Visibility Classes (Strict CSS Display Control) */
