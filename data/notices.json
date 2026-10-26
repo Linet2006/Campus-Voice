@@ -1,5 +1,23 @@
 [
   {
+    "id": 1793025805573,
+    "title": "exam",
+    "category": "Exams",
+    "description": "Exams are on from 29th october.",
+    "author": "Dr. Ramesh (CSE Dept)",
+    "postedBy": "Dr. Ramesh (CSE Dept)",
+    "authorRole": "faculty",
+    "date": "Oct 26, 2026",
+    "upvotes": 0,
+    "audience": {
+      "type": "branches",
+      "branches": [
+        "CSE"
+      ]
+    },
+    "attachment": null
+  },
+  {
     "id": 1792946905991,
     "title": "Gathering Info",
     "category": "Sports",

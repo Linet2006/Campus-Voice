@@ -1,0 +1,100 @@
+[
+  {
+    "id": 1792986357023,
+    "title": "internal Exam timing",
+    "details": "Is internal going to postponed",
+    "topic": "Exams",
+    "branch": "AIML",
+    "authorUsn": "4GH24AI020",
+    "authorName": "Likhitha Linet K R",
+    "isFaculty": false,
+    "anonymous": true,
+    "createdAt": "2026-10-26T03:45:57.023Z",
+    "status": "open",
+    "acceptedAnswerId": null,
+    "upvotes": 0,
+    "upvotedBy": [],
+    "reports": [],
+    "pinned": false
+  },
+  {
+    "id": 1792945000001,
+    "title": "What are the core technical rounds asked in Ahlya Technologies campus drive?",
+    "details": "Can seniors share what topics to focus on? Is it primarily DSA and system design, or do they ask deep questions on OS and DBMS?",
+    "topic": "Placements",
+    "branch": "CSE",
+    "authorUsn": "1GE22CS045",
+    "authorName": "Aditya Sharma",
+    "isFaculty": false,
+    "anonymous": false,
+    "createdAt": "2026-10-24T10:30:00.000Z",
+    "status": "resolved",
+    "acceptedAnswerId": 1792945100001,
+    "upvotes": 14,
+    "upvotedBy": [
+      "1GE22AI012",
+      "1GE22CS089"
+    ],
+    "reports": [],
+    "pinned": true
+  },
+  {
+    "id": 1792945000002,
+    "title": "Best datasets and frameworks for 5th semester Computer Vision mini-project?",
+    "details": "Our team is planning to build a real-time sign language interpreter using OpenCV and PyTorch. Would Kaggle datasets be sufficient or do we need to capture our own video data?",
+    "topic": "Projects",
+    "branch": "AIML",
+    "authorUsn": "1GE22AI012",
+    "authorName": "Pooja Hegde",
+    "isFaculty": false,
+    "anonymous": false,
+    "createdAt": "2026-10-24T14:15:00.000Z",
+    "status": "answered",
+    "acceptedAnswerId": null,
+    "upvotes": 9,
+    "upvotedBy": [
+      "1GE22CS045"
+    ],
+    "reports": [],
+    "pinned": false
+  },
+  {
+    "id": 1792945000003,
+    "title": "VTU Odd Semester Practical and Theory exam schedule clarification",
+    "details": "Has the official circular for 5th sem lab examination dates been released by the exam section? Some circulars circulating on WhatsApp mention Nov 15th.",
+    "topic": "Exams",
+    "branch": "All",
+    "authorUsn": "1GE22ME019",
+    "authorName": "Karthik Nair",
+    "isFaculty": false,
+    "anonymous": true,
+    "createdAt": "2026-10-25T08:00:00.000Z",
+    "status": "answered",
+    "acceptedAnswerId": null,
+    "upvotes": 21,
+    "upvotedBy": [
+      "1GE22CS045",
+      "1GE22AI012"
+    ],
+    "reports": [],
+    "pinned": true
+  },
+  {
+    "id": 1792945000004,
+    "title": "Availability of Microcontroller STM32 development boards in department library",
+    "details": "Do we need a faculty permission slip to issue the STM32 kits for the Embedded Systems course, or can we issue them directly with our college ID card?",
+    "topic": "Academics",
+    "branch": "ECE",
+    "authorUsn": "1GE22EC055",
+    "authorName": "Suresh Kumar",
+    "isFaculty": false,
+    "anonymous": false,
+    "createdAt": "2026-10-25T11:20:00.000Z",
+    "status": "open",
+    "acceptedAnswerId": null,
+    "upvotes": 5,
+    "upvotedBy": [],
+    "reports": [],
+    "pinned": false
+  }
+]

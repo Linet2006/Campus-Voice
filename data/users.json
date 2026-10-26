@@ -6,5 +6,21 @@
     "email": "aditya@gec.edu",
     "semester": "5th Semester",
     "passwordHash": "703b0a3d6ad75b649a28adde7d83c6251da457549263bc7ff45ec709b0a8448b"
+  },
+  {
+    "usn": "4GH24AI020",
+    "name": "Likhitha Linet K R",
+    "branch": "AIML",
+    "email": "likhithalinet@gmail.com",
+    "semester": "5th Semester",
+    "passwordHash": "1e0f3b8c76bb3bbaaae25d4c5ac9152fdb9168979d52df5d52e3959fc404376a"
+  },
+  {
+    "usn": "4GH24CS056",
+    "name": "Nisarge",
+    "branch": "CSE",
+    "email": "likhithalinet23@gmail.com",
+    "semester": "5th Semester",
+    "passwordHash": "1e0f3b8c76bb3bbaaae25d4c5ac9152fdb9168979d52df5d52e3959fc404376a"
   }
 ]

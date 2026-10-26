@@ -1,0 +1,20 @@
+{
+  "name": "campus-voice",
+  "version": "1.0.0",
+  "description": "Departmental Announcement and Student Q&A Community Portal for Government Engineering College",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "campus-voice",
+    "college",
+    "notices",
+    "community-qa"
+  ],
+  "author": "Government Engineering College",
+  "license": "MIT"
+}

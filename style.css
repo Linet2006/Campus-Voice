@@ -1,137 +1,100 @@
-/* =========================================
-   CAMPUS VOICE
-   Custom CSS used with Tailwind CSS
-========================================= */
+/* ==========================================================================
+   CAMPUS VOICE - CORE DESIGN SYSTEM STYLESHEET
+   Government Engineering College | Notice Board & Community Q&A
+   Vanilla CSS with Tailwind CSS CDN
+   ========================================================================== */
 
-/* Category Filter Button */
-.filter-pill {
-    padding: 0.45rem 0.95rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    border-radius: 9999px;
-    background-color: #f1f5f9;
-    color: #475569;
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    user-select: none;
+/* ==========================================================================
+   1. CSS CUSTOM PROPERTIES & DESIGN TOKENS
+   ========================================================================== */
+:root {
+    /* Header & Navigation Heights */
+    --header-height: 58px;
+    --nav-height: 50px;
+
+    /* Brand Tokens (Indigo Spectrum) */
+    --brand-50: #eef2ff;
+    --brand-100: #e0e7ff;
+    --brand-200: #c7d2fe;
+    --brand-500: #6366f1;
+    --brand-600: #4f46e5;
+    --brand-700: #4338ca;
+    --brand-800: #3730a3;
+    --brand-900: #1e1b4b;
+    --brand-950: #0f0e26;
+
+    /* Accent Tokens (Amber Spectrum) */
+    --accent: #f59e0b;
+    --accent-hover: #d97706;
+
+    /* Neutral Surfaces */
+    --bg-page: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-card-subtle: #f1f5f9;
+    --border-card: #e2e8f0;
+    --border-input: #cbd5e1;
+
+    /* Text Colors */
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+
+    /* Soft Layered Shadows */
+    --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+    --shadow-card-hover: 0 12px 28px -6px rgba(15, 23, 42, 0.09), 0 6px 12px -4px rgba(15, 23, 42, 0.04);
 }
 
-.filter-pill:hover {
-    background-color: #e2e8f0;
-    color: #1e293b;
-    transform: translateY(-1px);
+.dark {
+    /* Dark Neutral Surfaces */
+    --bg-page: #0b0f19;
+    --bg-card: #111827;
+    --bg-card-subtle: #1f2937;
+    --border-card: #1f2937;
+    --border-input: #374151;
+
+    /* Dark Text Colors */
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+
+    /* Dark Shadows */
+    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 2px 6px -1px rgba(0, 0, 0, 0.2);
+    --shadow-card-hover: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 6px 12px -4px rgba(0, 0, 0, 0.35);
 }
 
-/* Currently Selected Category */
-.active-pill {
-    background-color: #3730a3 !important;
-    color: #ffffff !important;
-    border-color: #3730a3 !important;
-    box-shadow: 0 4px 8px rgba(55, 48, 163, 0.25);
-}
 
-/* Announcement Card */
-.notice-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.notice-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
-}
-
-/* Attachment Card Media */
-.notice-attachment-slot img {
-    transition: transform 0.25s ease;
-}
-
-.notice-attachment-slot:hover img {
-    transform: scale(1.02);
-}
-
-/* Form Controls */
-.form-control {
-    width: 100%;
-    background-color: #f8fafc;
-    border: 1px solid #cbd5e1;
+/* ==========================================================================
+   2. ACCESSIBILITY & SKIP TO CONTENT
+   ========================================================================== */
+.skip-link {
+    position: absolute;
+    top: -9999px;
+    left: 1rem;
+    z-index: 100;
+    background-color: var(--brand-600);
+    color: #ffffff;
+    padding: 0.5rem 1rem;
     border-radius: 0.75rem;
-    padding: 0.65rem 0.85rem;
     font-size: 0.875rem;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    transition: top 0.2s ease;
 }
 
-.form-control:focus {
-    background-color: #ffffff;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+.skip-link:focus {
+    top: 1rem;
 }
 
-/* Password Toggle Icon Button */
-.password-toggle {
-    cursor: pointer;
-    user-select: none;
-    transition: color 0.15s ease;
+:focus-visible {
+    outline: 2px solid var(--brand-500);
+    outline-offset: 2px;
 }
 
-/* Toast Animation */
-#toast {
-    animation: toastIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
 
-@keyframes toastIn {
-    from {
-        opacity: 0;
-        transform: translateY(16px) scale(0.96);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-/* File Viewer Modal Elements */
-#fileViewerModal {
-    animation: viewerFadeIn 0.2s ease-out;
-}
-
-#fileViewerBody {
-    scroll-behavior: auto;
-}
-
-@keyframes viewerFadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-.pdf-page-container {
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-    transition: transform 0.15s ease;
-}
-
-.pdf-page-container canvas {
-    display: block;
-    width: 100%;
-    height: auto;
-}
-
-.cursor-zoom-in {
-    cursor: zoom-in;
-}
-
-.cursor-zoom-out {
-    cursor: zoom-out;
-}
-
-/* Role Visibility Classes (Strict CSS Display Control) */
+/* ==========================================================================
+   3. ROLE VISIBILITY (STRICT DISPLAY RULES - DO NOT REMOVE)
+   ========================================================================== */
 .faculty-only {
     display: none !important;
 }
@@ -175,53 +138,26 @@ body.role-student span.student-only {
     display: inline-flex !important;
 }
 
-/* Smooth custom scrollbars */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+
+/* ==========================================================================
+   4. NAVIGATION TABS (STICKY OFFSET & ACTIVE STATE)
+   ========================================================================== */
+nav.sticky {
+    top: var(--header-height, 57px);
 }
 
-/* =========================================
-   COMMUNITY Q&A MODULE STYLES
-   ========================================= */
-
-/* Line Clamping */
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-/* Main Navigation Tabs */
 .nav-tab-btn {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     user-select: none;
+    cursor: pointer;
 }
 
 .nav-tab-btn.active-tab {
     background-color: #3730a3 !important;
     color: #ffffff !important;
     font-weight: 700 !important;
-    box-shadow: 0 4px 12px rgba(55, 48, 163, 0.35);
+    box-shadow: 0 4px 14px rgba(55, 48, 163, 0.35);
 }
 
 .nav-tab-btn:not(.active-tab) {
@@ -230,11 +166,154 @@ body.role-student span.student-only {
 }
 
 .nav-tab-btn:not(.active-tab):hover {
-    background-color: rgba(67, 56, 202, 0.5);
+    background-color: rgba(67, 56, 202, 0.45);
     color: #ffffff;
 }
 
-/* Topic Badges */
+.dark .nav-tab-btn.active-tab {
+    background-color: #4f46e5 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
+}
+
+
+/* ==========================================================================
+   5. FILTER PILLS & CATEGORIES
+   ========================================================================== */
+.filter-pill {
+    padding: 0.45rem 0.95rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.filter-pill:hover {
+    background-color: #e2e8f0;
+    color: #1e293b;
+    transform: translateY(-1px);
+}
+
+.active-pill {
+    background-color: #3730a3 !important;
+    color: #ffffff !important;
+    border-color: #3730a3 !important;
+    box-shadow: 0 4px 12px rgba(55, 48, 163, 0.25);
+}
+
+.dark .filter-pill {
+    background-color: #1e293b;
+    color: #cbd5e1;
+    border-color: #334155;
+}
+
+.dark .filter-pill:hover {
+    background-color: #334155;
+    color: #f8fafc;
+}
+
+.dark .active-pill {
+    background-color: #4f46e5 !important;
+    border-color: #4f46e5 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+}
+
+
+/* ==========================================================================
+   6. CARDS & HOVER LIFT (NOTICES & QUESTIONS)
+   ========================================================================== */
+.notice-card,
+.qa-card {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease;
+}
+
+.notice-card:hover,
+.qa-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card-hover);
+}
+
+.notice-attachment-slot img {
+    transition: transform 0.25s ease;
+}
+
+.notice-attachment-slot:hover img {
+    transform: scale(1.02);
+}
+
+.question-card-pinned {
+    border-left: 4px solid #f59e0b !important;
+}
+
+.accepted-answer-card {
+    border-color: #10b981 !important;
+    background-color: #f0fdf4 !important;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.12);
+}
+
+.dark .accepted-answer-card {
+    background-color: rgba(6, 78, 59, 0.25) !important;
+    border-color: #10b981 !important;
+}
+
+
+/* ==========================================================================
+   7. FORM CONTROLS & INPUTS
+   ========================================================================== */
+.form-control {
+    width: 100%;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.875rem;
+    color: #1e293b;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.form-control:focus {
+    background-color: #ffffff;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+}
+
+.dark .form-control {
+    background-color: #1e293b;
+    border-color: #374151;
+    color: #f8fafc;
+}
+
+.dark .form-control:focus {
+    background-color: #111827;
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25);
+}
+
+.password-toggle {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s ease, transform 0.1s ease;
+}
+
+.password-toggle:hover {
+    transform: scale(1.1);
+}
+
+
+/* ==========================================================================
+   8. TOPIC & STATUS BADGES (LIGHT & DARK MODES)
+   ========================================================================== */
 .badge-topic-exams {
     background-color: #fee2e2;
     color: #991b1b;
@@ -271,6 +350,43 @@ body.role-student span.student-only {
     border: 1px solid #e2e8f0;
 }
 
+/* Dark mode topic badges */
+.dark .badge-topic-exams {
+    background-color: rgba(153, 27, 27, 0.3);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+.dark .badge-topic-placements {
+    background-color: rgba(146, 64, 14, 0.3);
+    color: #fde047;
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.dark .badge-topic-projects {
+    background-color: rgba(55, 48, 163, 0.35);
+    color: #c7d2fe;
+    border-color: rgba(99, 102, 241, 0.45);
+}
+
+.dark .badge-topic-academics {
+    background-color: rgba(91, 33, 182, 0.35);
+    color: #ddd6fe;
+    border-color: rgba(139, 92, 246, 0.45);
+}
+
+.dark .badge-topic-hostel {
+    background-color: rgba(22, 101, 52, 0.3);
+    color: #86efac;
+    border-color: rgba(34, 197, 94, 0.4);
+}
+
+.dark .badge-topic-general {
+    background-color: #1e293b;
+    color: #cbd5e1;
+    border-color: #334155;
+}
+
 /* Status Badges */
 .status-badge-open {
     background-color: #f1f5f9;
@@ -290,19 +406,25 @@ body.role-student span.student-only {
     border: 1px solid #a7f3d0;
 }
 
-/* Accepted Answer Highlighting */
-.accepted-answer-card {
-    border-color: #10b981 !important;
-    background-color: #f0fdf4 !important;
-    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.12);
+.dark .status-badge-open {
+    background-color: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
 }
 
-/* Pinned Question Card Accent */
-.question-card-pinned {
-    border-left: 4px solid #f59e0b !important;
+.dark .status-badge-answered {
+    background-color: rgba(29, 78, 216, 0.25);
+    color: #93c5fd;
+    border-color: rgba(59, 130, 246, 0.4);
 }
 
-/* Upvote Active Style */
+.dark .status-badge-resolved {
+    background-color: rgba(4, 120, 87, 0.25);
+    color: #6ee7b7;
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+/* Upvote Active State */
 .upvote-active {
     background-color: #e0e7ff !important;
     color: #4338ca !important;
@@ -310,12 +432,241 @@ body.role-student span.student-only {
     font-weight: 700 !important;
 }
 
-/* Question / Answer Card Hover Effect */
-.qa-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+.dark .upvote-active {
+    background-color: rgba(79, 70, 229, 0.3) !important;
+    color: #a5b4fc !important;
+    border-color: #6366f1 !important;
 }
 
-.qa-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
+
+/* ==========================================================================
+   9. LINE CLAMP UTILITIES
+   ========================================================================== */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+
+/* ==========================================================================
+   10. MODAL INNER PANEL ANIMATION & STYLING
+   ========================================================================== */
+/* Note: Animation is applied only to child dialog panels so the parent container
+   remains controlled strictly by "hidden" / "flex" classes */
+.modal-panel-animate,
+#noticeModal > div,
+#categoryModal > div,
+#studentProfileModal > div,
+#askQuestionModal > div,
+#questionDetailModal > div,
+#editQuestionModal > div,
+#editAnswerModal > div,
+#roleScreen > div {
+    animation: modalPanelIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPanelIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+
+/* ==========================================================================
+   11. TOAST NOTIFICATION
+   ========================================================================== */
+#toast {
+    animation: toastIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+/* ==========================================================================
+   12. FILE VIEWER MODAL & PDF RENDERING
+   ========================================================================== */
+#fileViewerModal {
+    animation: viewerFadeIn 0.2s ease-out;
+}
+
+#fileViewerBody {
+    scroll-behavior: auto;
+}
+
+@keyframes viewerFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.pdf-page-container {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease;
+}
+
+.pdf-page-container canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.cursor-zoom-in {
+    cursor: zoom-in;
+}
+
+.cursor-zoom-out {
+    cursor: zoom-out;
+}
+
+
+/* ==========================================================================
+   13. BUTTON & MICRO-INTERACTIONS
+   ========================================================================== */
+.btn-press {
+    transition: transform 0.1s ease, filter 0.15s ease;
+}
+
+.btn-press:active {
+    transform: scale(0.97);
+}
+
+.upvote-pop {
+    animation: upvotePop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes upvotePop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+
+/* ==========================================================================
+   14. DARK MODE OVERRIDES FOR JS-GENERATED & STATIC UTILITIES
+   ========================================================================== */
+.dark body {
+    background-color: #0b0f19;
+    color: #f1f5f9;
+}
+
+.dark .bg-white {
+    background-color: #111827 !important;
+    color: #f8fafc !important;
+}
+
+.dark .bg-slate-50,
+.dark .bg-slate-50\/50,
+.dark .bg-slate-50\/70 {
+    background-color: #0f172a !important;
+}
+
+.dark .bg-slate-100,
+.dark .bg-slate-200,
+.dark .bg-slate-200\/80 {
+    background-color: #1e293b !important;
+}
+
+.dark .border-slate-100,
+.dark .border-slate-200 {
+    border-color: #1f2937 !important;
+}
+
+.dark .border-slate-300 {
+    border-color: #334155 !important;
+}
+
+.dark .text-slate-900,
+.dark .text-slate-800 {
+    color: #f8fafc !important;
+}
+
+.dark .text-slate-700,
+.dark .text-slate-600 {
+    color: #cbd5e1 !important;
+}
+
+.dark .text-slate-500,
+.dark .text-slate-400 {
+    color: #94a3b8 !important;
+}
+
+.dark .hover\:bg-slate-100:hover {
+    background-color: #1e293b !important;
+}
+
+.dark .hover\:bg-white:hover {
+    background-color: #1f2937 !important;
+}
+
+.dark #roleScreen > div {
+    background-color: #111827 !important;
+    border-color: #1f2937 !important;
+}
+
+
+/* ==========================================================================
+   15. CUSTOM SCROLLBARS & ACCESSIBILITY REDUCED MOTION
+   ========================================================================== */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #334155;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }

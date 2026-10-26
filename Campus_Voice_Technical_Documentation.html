@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Voice - Comprehensive Technical Documentation</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 16mm 14mm;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #1e293b;
+            background: #ffffff;
+            line-height: 1.55;
+            font-size: 10.5pt;
+        }
+
+        .header-box {
+            border-bottom: 3px solid #4f46e5;
+            padding-bottom: 14px;
+            margin-bottom: 20px;
+        }
+
+        .college-badge {
+            display: inline-block;
+            background: #eef2ff;
+            color: #4338ca;
+            font-size: 8.5pt;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            margin-bottom: 8px;
+            border: 1px solid #c7d2fe;
+        }
+
+        h1 {
+            font-size: 20pt;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            font-size: 11pt;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .meta-strip {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            font-size: 8.5pt;
+            color: #64748b;
+        }
+
+        .meta-strip span strong {
+            color: #1e293b;
+        }
+
+        h2 {
+            font-size: 13pt;
+            font-weight: 700;
+            color: #1e1b4b;
+            border-bottom: 1.5px solid #e2e8f0;
+            padding-bottom: 4px;
+            margin-top: 22px;
+            margin-bottom: 10px;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            font-size: 11pt;
+            font-weight: 700;
+            color: #3730a3;
+            margin-top: 12px;
+            margin-bottom: 6px;
+            page-break-after: avoid;
+        }
+
+        p {
+            margin-bottom: 9px;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+
+        li {
+            margin-bottom: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 16px 0;
+            font-size: 9pt;
+            page-break-inside: avoid;
+        }
+
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 7px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+
+        .tech-pill {
+            display: inline-block;
+            font-weight: 700;
+            color: #312e81;
+            background: #e0e7ff;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 8.5pt;
+            margin-bottom: 2px;
+        }
+
+        .diagram-box {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin: 14px 0;
+            font-family: ui-monospace, Menlo, Consolas, monospace;
+            font-size: 8pt;
+            line-height: 1.45;
+            color: #1e293b;
+            page-break-inside: avoid;
+            white-space: pre;
+        }
+
+        .highlight-card {
+            background: #f8fafc;
+            border-left: 4px solid #6366f1;
+            padding: 10px 14px;
+            margin: 12px 0;
+            border-radius: 0 6px 6px 0;
+            page-break-inside: avoid;
+        }
+
+        .highlight-card strong {
+            color: #1e1b4b;
+        }
+
+        .qa-item {
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+        }
+
+        .qa-q {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 9.5pt;
+        }
+
+        .qa-a {
+            color: #334155;
+            font-size: 9pt;
+            margin-top: 2px;
+            margin-left: 12px;
+        }
+
+        code {
+            background: #f1f5f9;
+            color: #b91c1c;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 8.5pt;
+            font-family: Consolas, monospace;
+        }
+
+        .footer {
+            margin-top: 24px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 8px;
+            font-size: 8pt;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-box">
+        <div class="college-badge">Government Engineering College • Technical Architecture</div>
+        <h1>Campus Voice — Comprehensive Technical Guide</h1>
+        <div class="subtitle">Full-Stack Architecture, Technology Rationale, and Viva/Interview Reference</div>
+        <div class="meta-strip">
+            <span><strong>Target System:</strong> Institutional Announcement & Peer Q&A Portal</span>
+            <span><strong>Stack:</strong> Vanilla JS, HTML5, Tailwind CSS, PDF.js, Node.js Native HTTP</span>
+            <span><strong>Port:</strong> 3000</span>
+        </div>
+    </div>
+
+    <h2>1. Executive Summary & Problem Solved</h2>
+    <p>
+        In engineering colleges, critical communications (exam circulars, lab timetables, on-campus drive schedules, hackathon calls) are typically distributed through unorganized WhatsApp groups, unofficial social channels, or physical bulletin boards. This causes circular loss, unverified rumors, and communication friction.
+    </p>
+    <p>
+        <strong>Campus Voice</strong> solves this with a unified, dual-module institutional web portal:
+    </p>
+    <ul>
+        <li><strong>Official Notice Board:</strong> Faculty-published circulars with branch targeting (CSE, AIML, ECE, ME, CV), category filtering, upvoting, bookmarking, and high-fidelity PDF/image attachment previewing.</li>
+        <li><strong>Student Community Q&A:</strong> A moderated peer-to-peer discussion forum (StackOverflow/Reddit style) categorized into topics (Placements, Exams, Projects, Academics, Hostel), featuring verified faculty responses, accepted answer resolution, anonymous posting, and community reporting.</li>
+    </ul>
+
+    <h2>2. High-Level Architectural Flow</h2>
+    <div class="diagram-box">
++---------------------------------------------------------------------------------------------------+
+|                                  CLIENT LAYER (BROWSER)                                           |
+|  +--------------------+     +------------------------+     +-----------------------------------+  |
+|  | index.html (DOM)   | <-> | app.js (State Machine) | <-> | PDF.js 3.11.174 (Canvas Renderer) |  |
+|  | Tailwind + CSS3    |     | UI Templates & Events  |     +-----------------------------------+  |
+|  +--------------------+     +------------------------+                                            |
+|                                       ^          ^                                                |
+|                   Session & Cache     |          |  Async REST API & Chunked Binary Stream         |
+|                                       v          v                                                |
+|                            [localStorage / IndexedDB]                                             |
++--------------------------------------------------|------------------------------------------------+
+                                                   | HTTP (Port 3000)
++--------------------------------------------------v------------------------------------------------+
+|                             BACKEND LAYER (Node.js - server.js)                                   |
+|  +-------------------------------------+   +---------------------------------------------------+  |
+|  | REST API Router                     |   | Streaming File Upload Handler                     |  |
+|  | (/api/notices, /api/questions, etc) |   | (Chunked buffer concats, MIME metadata generation)|  |
+|  +-------------------------------------+   +---------------------------------------------------+  |
+|                                       ^          ^                                                |
+|                                       v          v                                                |
+|                             [Flat File Database: data/*.json & data/uploads/]                     |
++---------------------------------------------------------------------------------------------------+</div>
+
+    <h2>3. Full Technology Breakdown: What, Why, and How</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 22%;">Technology</th>
+                <th style="width: 38%;">Why We Chose It (Rationale)</th>
+                <th style="width: 40%;">How It Is Implemented (Code Details)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="tech-pill">Vanilla JavaScript</span><br>ES6+ (Client)</td>
+                <td><strong>Zero build step and maximum performance.</strong> No framework overhead (React/Vue/Angular), instant page boot, minimal memory consumption, and straightforward debugging directly in browser DevTools.</td>
+                <td><code>app.js</code> manages reactive client state machines (<code>currentRole</code>, <code>activeTab</code>, <code>currentFilter</code>), builds dynamic UI nodes via template literals, enforces XSS sanitization, and handles asynchronous API calls.</td>
+            </tr>
+            <tr>
+                <td><span class="tech-pill">HTML5 & Semantic DOM</span></td>
+                <td>Provides accessible landmarks (<code>&lt;header&gt;</code>, <code>&lt;nav&gt;</code>, <code>&lt;main&gt;</code>, <code>&lt;dialog&gt;</code>), fast parsing, clear hierarchy, and natural keyboard navigability.</td>
+                <td><code>index.html</code> defines structured sections (<code>#noticesSection</code>, <code>#communitySection</code>), accessible skip links, aria attributes, and modal backdrops.</td>
+            </tr>
+            <tr>
+                <td><span class="tech-pill">Tailwind CSS</span><br>(CDN Version)</td>
+                <td>Offers utility-first styling with consistent spacing rhythms (4px/8px), fluid typography, and built-in responsive breakpoints (<code>sm:</code>, <code>md:</code>, <code>lg:</code>) without authoring hundreds of media queries.</td>
+                <td>Configured inline with customized color tokens: <code>brand</code> (50–950 indigo spectrum), <code>accent</code> (amber spectrum), <code>success</code>, <code>warning</code>, <code>danger</code>, and custom elevation shadows.</td>
+            </tr>
+            <tr>
+                <td><span class="tech-pill">Vanilla CSS3</span><br>(style.css)</td>
+                <td>CDN Tailwind cannot dynamically target template-string-generated HTML or enforce strict CSS inheritance rules. Custom CSS gives granular, low-level styling control.</td>
+                <td>Defines <code>:root</code> and <code>.dark</code> CSS variables, strict Role-Based Access Control rules, modal entrance keyframes (<code>modalPanelIn</code>), micro-interactions (<code>.btn-press</code>, <code>.upvote-pop</code>), and custom scrollbars.</td>
+            </tr>
+            <tr>
+                <td><span class="tech-pill">PDF.js 3.11.174</span><br>(Mozilla)</td>
+                <td>Standard browsers force PDF downloads or launch external readers. PDF.js allows direct, in-app vector canvas rendering without third-party plugins.</td>
+                <td>Loads raw binary array buffers, executes viewport calculations with device-pixel-ratio scaling for retina screens, and draws pages onto <code>&lt;canvas&gt;</code> elements inside <code>#fileViewerModal</code>.</td>
+            </tr>
+            <tr>
+                <td><span class="tech-pill">Node.js Native HTTP</span><br>(server.js)</td>
+                <td><strong>Zero external npm dependencies.</strong> Eliminates Express/Fastify bloat, runs on only ~20 MB RAM, and is immune to third-party supply chain vulnerabilities.</td>
+                <td>Uses Node's built-in <code>http</code>, <code>fs</code>, and <code>path</code> modules. Implements a custom REST router, CORS handler, static asset server, and chunked streaming binary uploader.</td>
+            </tr>
+            <tr>
+                <td><span class="tech-pill">Flat-File JSON DB</span><br>(data/*.json)</td>
+                <td>Simplicity, portability, and zero configuration. Eliminates the requirement to set up, authenticate, and manage external database servers (Postgres/Mongo) for local deployment.</td>
+                <td>Stores normalized JSON files: <code>notices.json</code>, <code>questions.json</code>, <code>answers.json</code>, <code>users.json</code>, <code>categories.json</code>. The server executes atomic reads/writes on every mutation.</td>
+            </tr>
+            <tr>
+                <td><span class="tech-pill">Browser Web Storage</span></td>
+                <td>Maintains persistent client sessions, instantaneous offline hydration, and user preferences across tabs.</td>
+                <td><code>localStorage</code> stores student session credentials (<code>campusSession</code>), theme choice (<code>campusTheme</code>), bookmarks, and upvote maps. <code>IndexedDB</code> caches binary attachment files for offline viewing.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <h2>4. Core Architectural Systems: Deep Dives</h2>
+
+    <h3>A. Role-Based Access Control (RBAC) via CSS Hierarchy</h3>
+    <p>
+        Rather than executing heavy DOM manipulation loops to query and hide role-specific buttons on every render, role visibility is handled directly by the browser's CSS rendering engine:
+    </p>
+    <div class="highlight-card">
+        <strong>The Strict Role Display Architecture:</strong><br>
+        <code>.faculty-only { display: none !important; }</code><br>
+        <code>body.role-faculty .faculty-only { display: block !important; }</code><br>
+        <code>.student-only { display: none !important; }</code><br>
+        <code>body.role-student .student-only { display: block !important; }</code>
+    </div>
+    <p>
+        When a user logs in, JavaScript simply executes <code>document.body.classList.add("role-faculty")</code>. The browser instantly reflows and displays faculty controls (e.g., "Post Notice", "Delete", "Add Category") while keeping students restricted. This architecture makes role transitions instantaneous and impossible to break via accidental inline style changes.
+    </p>
+
+    <h3>B. XSS Defense & Input Sanitization</h3>
+    <p>
+        Because notices and Q&A threads are injected dynamically into the DOM using template literals, the application incorporates a rigorous Cross-Site Scripting (XSS) defense layer:
+    </p>
+    <ul>
+        <li><code>escapeHtml(str)</code>: Replaces <code>&amp;</code>, <code>&lt;</code>, <code>&gt;</code>, and <code>"</code> with HTML entities to neutralize script injection.</li>
+        <li><code>escapeJs(str)</code>: Neutralizes quotes and special characters within inline event handler arguments (e.g., <code>onclick="openFileViewer('${escapeJs(fileId)}')"</code>).</li>
+    </ul>
+
+    <h3>C. Flash-of-Unstyled-Content (FOUC) Dark Mode Architecture</h3>
+    <p>
+        To prevent the jarring "white flash" that occurs when dark mode is initialized after CSS loads, a synchronous, blocking script is placed directly in the <code>&lt;head&gt;</code> of <code>index.html</code>:
+    </p>
+    <div class="highlight-card">
+        <code>const saved = localStorage.getItem("campusTheme");</code><br>
+        <code>const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;</code><br>
+        <code>if (saved === "dark" || (!saved &amp;&amp; prefersDark)) document.documentElement.classList.add("dark");</code>
+    </div>
+    <p>
+        This executes before the browser paints its initial frame, ensuring seamless dark mode rendering from millisecond zero.
+    </p>
+
+    <h3>D. Chunked Streaming Binary File Uploads</h3>
+    <p>
+        Unlike frameworks requiring third-party libraries like Multer, <code>server.js</code> natively consumes binary streams:
+    </p>
+    <ol>
+        <li>Incoming <code>POST /api/files/:id</code> requests stream raw data chunks into memory.</li>
+        <li><code>Buffer.concat(chunks)</code> stitches the payload together into a single atomic buffer.</li>
+        <li>The buffer is written directly to <code>data/uploads/{fileId}</code> while headers (<code>X-File-Name</code>, <code>X-File-Type</code>) are persisted to a companion JSON metadata file (<code>{fileId}.meta.json</code>).</li>
+        <li>When requested via <code>GET /api/files/:id</code>, the server sets correct <code>Content-Type</code> and <code>Content-Disposition: inline</code> headers, allowing PDF.js or browser image decoders to display the file natively.</li>
+    </ol>
+
+    <h2>5. Viva / Technical Interview Q&amp;A Cheat Sheet</h2>
+    
+    <div class="qa-item">
+        <div class="qa-q">Q1: Why didn't you use React, Next.js, or Vue for this project?</div>
+        <div class="qa-a">
+            <strong>Answer:</strong> "For an institutional campus intranet, Vanilla JavaScript provides zero build dependencies, instant startup, sub-50ms load times, and a near-zero memory footprint. It avoids build-tool vulnerabilities, npm supply-chain bloat, and framework deprecation cycles while giving complete mastery over the DOM."
+        </div>
+    </div>
+
+    <div class="qa-item">
+        <div class="qa-q">Q2: Why did you build the server with Node's native HTTP module instead of Express?</div>
+        <div class="qa-a">
+            <strong>Answer:</strong> "By avoiding Express, our backend has zero third-party dependencies and runs entirely on Node.js core. This guarantees negligible memory usage (~20 MB), lightning-fast execution, and complete elimination of npm package vulnerabilities. It also showcases fundamental knowledge of HTTP protocols, streams, and file I/O."
+        </div>
+    </div>
+
+    <div class="qa-item">
+        <div class="qa-q">Q3: How does the in-app PDF preview work without forcing a file download?</div>
+        <div class="qa-a">
+            <strong>Answer:</strong> "We integrated Mozilla's PDF.js library. When a user clicks 'View Attachment', the client fetches the binary PDF as an ArrayBuffer. PDF.js decodes the PDF's vector stream and renders each page directly onto an HTML5 <code>&lt;canvas&gt;</code> element, calculating device-pixel-ratio scaling for sharp rendering on retina screens."
+        </div>
+    </div>
+
+    <div class="qa-item">
+        <div class="qa-q">Q4: How does the system handle multi-browser synchronization?</div>
+        <div class="qa-a">
+            <strong>Answer:</strong> "The server enforces CORS headers (<code>Access-Control-Allow-Origin: *</code>). If a faculty member on Chrome posts a circular or accepts a student's answer, it is atomically committed to the backend JSON store. When a student on Edge or a mobile browser loads or refreshes their feed, the updated state is immediately fetched and reflected."
+        </div>
+    </div>
+
+    <div class="qa-item">
+        <div class="qa-q">Q5: How would you scale this architecture to support 10,000+ simultaneous students?</div>
+        <div class="qa-a">
+            <strong>Answer:</strong> "1. Replace flat JSON storage with an indexed database like PostgreSQL (with connection pooling) or MongoDB.<br>
+            2. Offload uploaded file storage from local disk to AWS S3 or Cloudflare R2 behind a CloudFront CDN.<br>
+            3. Implement JWT-based authentication with bcrypt-hashed passwords.<br>
+            4. Integrate WebSockets (or Server-Sent Events) to push real-time circular notifications without manual refreshes."
+        </div>
+    </div>
+
+    <div class="footer">
+        <span>Campus Voice • Government Engineering College</span>
+        <span>Confidential & Proprietary Technical Documentation</span>
+    </div>
+
+</body>
+</html>

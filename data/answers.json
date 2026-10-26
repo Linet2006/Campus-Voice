@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1792945100001,
+    "questionId": 1792945000001,
+    "text": "Focus heavily on Data Structures (Trees, Graphs, Hash Maps), SQL queries, and Object-Oriented Programming. They also emphasize clean coding and explaining your thought process during problem solving.",
+    "authorUsn": "FACULTY_CSE",
+    "authorName": "Dr. Ramesh (CSE Dept)",
+    "isFaculty": true,
+    "anonymous": false,
+    "createdAt": "2026-10-24T12:00:00.000Z",
+    "upvotes": 18,
+    "upvotedBy": [
+      "1GE22CS045",
+      "1GE22AI012"
+    ],
+    "reports": []
+  },
+  {
+    "id": 1792945100002,
+    "questionId": 1792945000001,
+    "text": "Also review your 4th sem DBMS mini-project! In my round, they asked me to write SQL join queries on paper.",
+    "authorUsn": "1GE22CS089",
+    "authorName": "Kavya Rao",
+    "isFaculty": false,
+    "anonymous": false,
+    "createdAt": "2026-10-24T15:45:00.000Z",
+    "upvotes": 7,
+    "upvotedBy": [],
+    "reports": []
+  },
+  {
+    "id": 1792945100003,
+    "questionId": 1792945000002,
+    "text": "We used the ASL Alphabet dataset from Kaggle last semester along with MediaPipe for hand landmark detection. It runs in real-time even on standard laptop CPUs!",
+    "authorUsn": "1GE22AI034",
+    "authorName": "Rahul Verma",
+    "isFaculty": false,
+    "anonymous": false,
+    "createdAt": "2026-10-24T16:20:00.000Z",
+    "upvotes": 11,
+    "upvotedBy": [
+      "1GE22AI012"
+    ],
+    "reports": []
+  },
+  {
+    "id": 1792945100004,
+    "questionId": 1792945000003,
+    "text": "Please refer only to the official notices published here on Campus Voice. The lab examinations will commence from Nov 22nd. An official departmental circular will be uploaded by tomorrow.",
+    "authorUsn": "FACULTY_CSE",
+    "authorName": "Dr. Ramesh (CSE Dept)",
+    "isFaculty": true,
+    "anonymous": false,
+    "createdAt": "2026-10-25T09:10:00.000Z",
+    "upvotes": 25,
+    "upvotedBy": [
+      "1GE22CS045",
+      "1GE22ME019"
+    ],
+    "reports": []
+  }
+]

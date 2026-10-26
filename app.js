@@ -923,7 +923,7 @@ function updateStudentFeedToggleUI() {
         feedMyBranchBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs bg-brand-600 text-white";
         feedAllBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900";
         if (feedAudienceHint) {
-            feedAudienceHint.textContent = `Showing notices for ${currentSession ? currentSession.branch : "your branch"} & college-wide circulars`;
+            feedAudienceHint.textContent = `Showing notices specifically for ${currentSession ? currentSession.branch : "your branch"}`;
         }
     } else {
         feedAllBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs bg-brand-600 text-white";
@@ -1707,10 +1707,7 @@ function renderNotices() {
 
         if (studentFeedMode === "my-branch") {
             audienceFilteredNotices = audienceFilteredNotices.filter(function (notice) {
-                if (!notice.audience || notice.audience.type === "all") {
-                    return true;
-                }
-                return Array.isArray(notice.audience.branches) && notice.audience.branches.includes(studentBranch);
+                return notice.audience && notice.audience.type === "branches" && Array.isArray(notice.audience.branches) && notice.audience.branches.includes(studentBranch);
             });
         }
         // When studentFeedMode === "all", student sees all campus notices
@@ -3812,7 +3809,7 @@ function updateCommunityStudentFeedToggleUI() {
         commFeedMyBranchBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs bg-brand-600 text-white";
         commFeedAllBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900";
         if (commFeedAudienceHint) {
-            commFeedAudienceHint.textContent = `Showing questions for ${branch} & college-wide topics`;
+            commFeedAudienceHint.textContent = `Showing questions specifically for ${branch}`;
         }
     } else {
         commFeedAllBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs bg-brand-600 text-white";
@@ -3899,27 +3896,32 @@ async function renderCommunityFeed() {
         const studentBranch = session ? (session.branch || "CSE") : "CSE";
         if (commStudentFeedMode === "my-branch") {
             filtered = filtered.filter(function (q) {
-                return q.branch === "All" || q.branch === studentBranch;
+                return q.branch === studentBranch;
             });
         }
     }
 
-    // 3. Sort Questions (Pinned always stays at top)
+    // 3. Sort Questions
     filtered.sort(function (a, b) {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-
-        if (commCurrentSort === "upvotes") {
+        if (commCurrentSort === "unanswered") {
+            const aCount = answers.filter(function (ans) { return String(ans.questionId) === String(a.id); }).length;
+            const bCount = answers.filter(function (ans) { return String(ans.questionId) === String(b.id); }).length;
+            if (aCount !== bCount) {
+                return aCount - bCount; // 0 answers first, then 1, 2, etc.
+            }
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        } else if (commCurrentSort === "upvotes") {
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
             const diff = (b.upvotes || 0) - (a.upvotes || 0);
             if (diff !== 0) return diff;
             return new Date(b.createdAt) - new Date(a.createdAt);
-        } else if (commCurrentSort === "unanswered") {
-            const aCount = answers.filter(function (ans) { return String(ans.questionId) === String(a.id); }).length;
-            const bCount = answers.filter(function (ans) { return String(ans.questionId) === String(b.id); }).length;
-            if (aCount === 0 && bCount > 0) return -1;
-            if (aCount > 0 && bCount === 0) return 1;
-            return new Date(b.createdAt) - new Date(a.createdAt);
         } else {
+            // Default newest: pinned questions first, then newest date
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
             return new Date(b.createdAt) - new Date(a.createdAt);
         }
     });
