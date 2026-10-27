@@ -1,6 +1,7 @@
 node_modules/
 data/uploads/*
 !data/uploads/.gitkeep
+!data/uploads/file_1792944697936_3p3x5js*
 data/faculty.json
 data/sessions.json
 data/otps.json
