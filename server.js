@@ -757,10 +757,12 @@ const server = http.createServer((req, res) => {
             // 5. Send Email via nodemailer or output to console in demo mode
             try {
                 await dispatchOtpEmail(faculty.email, code, faculty.name);
+                const isDevMode = !process.env.SMTP_HOST || process.env.DEV_OTP_CONSOLE === 'true';
                 return sendJson(200, {
                     success: true,
                     message: `Verification code sent to ${faculty.email}`,
-                    expiresInSeconds: 600
+                    expiresInSeconds: 600,
+                    devCode: isDevMode ? code : undefined
                 });
             } catch (sendErr) {
                 console.error("Failed to dispatch OTP email:", sendErr);

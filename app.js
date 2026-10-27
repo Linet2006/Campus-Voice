@@ -1387,7 +1387,13 @@ async function handleFacultySendOtp() {
         }
 
         facultyPendingEmail = email.toLowerCase();
-        if (facultySentEmail) facultySentEmail.textContent = facultyPendingEmail;
+        if (facultySentEmail) {
+            if (data.devCode) {
+                facultySentEmail.innerHTML = `<span>${escapeHtml(facultyPendingEmail)}</span><div class="mt-2 p-2 bg-amber-100 border border-amber-300 rounded text-amber-950 font-sans"><span class="font-semibold text-xs">Demo Code:</span> <span class="font-mono font-black text-sm text-brand-900 tracking-wider">${escapeHtml(data.devCode)}</span></div>`;
+            } else {
+                facultySentEmail.textContent = facultyPendingEmail;
+            }
+        }
 
         if (facultyEmailStep) facultyEmailStep.classList.add("hidden");
         if (facultyOtpStep) facultyOtpStep.classList.remove("hidden");
