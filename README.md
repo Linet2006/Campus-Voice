@@ -45,15 +45,22 @@ In collegiate engineering environments, official communications (exam timetables
 
 ### 🛡️ Authentication & Role-Based Access Control (RBAC)
 * **Student Authentication**:
-  * Persistent sessions stored in `localStorage` (`campusSession`).
+  * Cryptographic session tokens (32 random bytes, hashed with SHA-256 in `data/sessions.json`).
+  * 30-day session expiry with server-side validation (`/api/auth/me`).
   * USN validation matching Karnataka/VTU formats (e.g., `1GE22CS045`, `4GH24AI020`).
-  * Automatic department auto-detection from USN digits.
-  * Client-side cryptographic password hashing via `SubtleCrypto` (SHA-256).
-* **Faculty Authentication**:
-  * Protected via department passcodes (`faculty123`).
-  * Unlocks administrative controls: Post Notice, Edit/Delete Circulars, Add New Category, Pin Question, Moderate Content.
-* **CSS-Driven Privilege Enforcement**:
-  Role visibility is enforced natively by the browser CSS rendering engine (`body.role-faculty .faculty-only` and `body.role-student .student-only`), guaranteeing instant reflow with zero JavaScript DOM query overhead.
+  * Automatic department detection from USN digits.
+  * Password verification with timing-safe SHA-256 comparison.
+* **Faculty Authentication (Institutional Allowlist & Single-Use OTP)**:
+  * Strict institutional allowlist defined in `data/faculty.json`. Only designated faculty emails can request access.
+  * Single-use 6-digit verification code with cryptographic salt & SHA-256 hash in `data/otps.json`.
+  * 10-minute code expiry with automatic invalidation after 5 incorrect attempts.
+  * Multi-tier rate limiting: 1 request/60s per email, 5 requests/hour per email, and 15 requests/10 min per IP.
+  * Secure delivery via Nodemailer SMTP (e.g., Gmail/Outlook) or formatted terminal console log (`DEV_OTP_CONSOLE`).
+  * Issues 8-hour cryptographic faculty session tokens. Name and department are pulled strictly from the server allowlist.
+* **Granular Endpoint Protection**:
+  * Notice publication, modification, and deletion are restricted strictly to faculty on the backend.
+  * Document upload restricted to faculty with a 10 MB file cap, MIME validation, and path traversal defense.
+  * CSS-driven role enforcement (`body.role-faculty .faculty-only` and `body.role-student .student-only`) for instantaneous client rendering.
 
 ### 🎨 Design System & Accessibility
 * **Color Palette**: Tailored Indigo brand spectrum (`brand-50` to `brand-950`) with warm amber accents (`accent`), emerald success, and rose danger tokens.
@@ -110,21 +117,26 @@ In collegiate engineering environments, official communications (exam timetables
 
 The backend provides a clean RESTful interface implemented on Node's native HTTP runtime:
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/notices` | Retrieve all official departmental announcements |
-| `POST` | `/api/notices` | Publish or update a notice (atomic JSON commit) |
-| `GET` | `/api/categories` | Retrieve list of active notice categories |
-| `POST` | `/api/categories` | Create a new notice category (Faculty only) |
-| `GET` | `/api/questions` | Fetch all Community Q&A questions |
-| `POST` | `/api/questions` | Submit a new question or update status/upvotes |
-| `GET` | `/api/answers` | Fetch all community answers |
-| `POST` | `/api/answers` | Submit a peer/faculty response or upvote |
-| `GET` | `/api/users` | Fetch registered student registry |
-| `POST` | `/api/users` | Register a new student account |
-| `GET` | `/api/files/:id` | Stream binary attachment with correct MIME headers |
-| `POST` | `/api/files/:id` | Upload raw binary attachment (via custom `X-File-Name` / `X-File-Type`) |
-| `DELETE` | `/api/files/:id` | Delete attachment and its metadata from server disk |
+| Method | Endpoint | Authorization | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/auth/student/login` | Public | Authenticate student by USN & password; returns 30-day session token |
+| `POST` | `/api/auth/faculty/request-otp` | Public (Rate Limited) | Send single-use 6-digit code to allowlisted faculty email |
+| `POST` | `/api/auth/faculty/verify-otp` | Public (Rate Limited) | Verify OTP code; returns 8-hour faculty session token |
+| `GET` | `/api/auth/me` | Bearer Token | Validate current session and retrieve verified role details |
+| `POST` | `/api/auth/logout` | Bearer Token | Invalidate and purge session token |
+| `GET` | `/api/notices` | Public | Retrieve official departmental announcements |
+| `POST` | `/api/notices` | Faculty Only | Publish, edit, delete circulars, or record user upvotes |
+| `GET` | `/api/categories` | Public | Retrieve list of active notice categories |
+| `POST` | `/api/categories` | Faculty Only | Create a new notice category |
+| `GET` | `/api/questions` | Public | Fetch all Community Q&A questions |
+| `POST` | `/api/questions` | Student / Faculty | Ask question, upvote, delete (author/faculty), or pin (faculty) |
+| `GET` | `/api/answers` | Public | Fetch all community answers |
+| `POST` | `/api/answers` | Student / Faculty | Post answer, upvote, or delete |
+| `GET` | `/api/users` | Public | Fetch student registry (passwords stripped) |
+| `POST` | `/api/users` | Public | Register a new student account (enforced `role: student`) |
+| `GET` | `/api/files/:id` | Public | Stream attachment with MIME headers & path traversal defense |
+| `POST` | `/api/files/:id` | Faculty Only | Upload attachment (10 MB cap, MIME validation) |
+| `DELETE` | `/api/files/:id` | Faculty Only | Delete notice attachment from disk |
 
 ---
 
@@ -162,13 +174,55 @@ http://<YOUR_LOCAL_IP>:3000
 
 ---
 
-## 🔐 Demo Credentials
+## 🔐 Demo Credentials & Faculty Allowlist
 
-| Role | Username / USN | Password / Passcode | Notes |
-| :--- | :--- | :--- | :--- |
-| **Student** | `1GE22CS045` | `student123` | Demo CSE Student (*Aditya Sharma*) |
-| **Student (Registration)** | Any valid USN (e.g. `1GE22AI012`) | Your choice | Automatic branch detection from USN |
-| **Faculty** | `Dr. Ramesh (CSE Dept)` | `faculty123` | Full announcement & moderation privileges |
+### 1. Student Access
+* **Registered Demo USN**: `1GE22CS045`
+* **Password**: `student123`
+* *Or register any new student account using your USN and email.*
+
+### 2. Faculty Access (Allowlist + Single-Use OTP)
+Enter an allowlisted institutional email address on the Faculty card:
+* `ramesh.cse@gec.edu` (Dr. Ramesh, CSE Dept)
+* `faculty@gec.edu` (Prof. S. Sharma, ECE Dept)
+
+Click **Send Verification Code →**. In development mode, the 6-digit code is immediately output to your terminal/console:
+```text
+============================================================
+ [DEMO MODE / DEV_OTP_CONSOLE] FACULTY OTP GENERATED
+ To: Dr. Ramesh (CSE Dept) <ramesh.cse@gec.edu>
+ One-Time Verification Code:  >>>  626828  <<<
+ Valid for: 10 minutes | Single-use only
+============================================================
+```
+Enter the 6-digit code and click **Verify & Sign In →** to unlock full administrative privileges.
+
+---
+
+## ⚙️ Environment Variables & Live SMTP Setup
+
+Configure the following environment variables (via `.env` or your hosting dashboard like Render/Railway):
+
+| Variable | Default | Purpose |
+| :--- | :--- | :--- |
+| `PORT` | `3000` | Port on which the HTTP server listens (`0.0.0.0`) |
+| `DEV_OTP_CONSOLE` | `true` | When `true`, prints OTP verification codes directly to the server terminal |
+| `SMTP_HOST` | *(none)* | Live SMTP server hostname (e.g., `smtp.gmail.com` or `smtp-mail.outlook.com`) |
+| `SMTP_PORT` | `587` | SMTP port (e.g., `587` for STARTTLS or `465` for SSL) |
+| `SMTP_USER` | *(none)* | SMTP username / institutional email |
+| `SMTP_PASS` | *(none)* | SMTP password or Google App Password |
+| `MAIL_FROM` | `"Campus Voice GEC" <noreply@gec.edu>` | Display name and sender address on verification emails |
+
+> **Faculty Allowlist Management**:  
+> To add or modify faculty members, edit `data/faculty.json`. Each entry defines:
+> ```json
+> {
+>   "email": "professor@gec.edu",
+>   "name": "Prof. Jane Doe",
+>   "department": "Computer Science & Engineering",
+>   "active": true
+> }
+> ```
 
 ---
 

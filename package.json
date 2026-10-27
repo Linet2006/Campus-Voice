@@ -16,5 +16,8 @@
     "community-qa"
   ],
   "author": "Government Engineering College",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "nodemailer": "^10.2.1"
+  }
 }

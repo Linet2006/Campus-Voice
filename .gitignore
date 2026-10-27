@@ -1,5 +1,10 @@
 node_modules/
 data/uploads/*
 !data/uploads/.gitkeep
+data/faculty.json
+data/sessions.json
+data/otps.json
 .DS_Store
 Thumbs.db
+.env
+

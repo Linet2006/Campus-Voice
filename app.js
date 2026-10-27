@@ -42,8 +42,68 @@ const BRANCHES = [
 // USN Validation Regex (Lenient pattern matching Karnataka / VTU formats e.g. 1GE22CS045)
 const USN_REGEX = /^[1-4][A-Z]{2}\d{2}[A-Z]{2,3}\d{3}$/i;
 
-// Demo Faculty Passcode Constant
-const FACULTY_PASSCODE = "faculty123";
+// Authentication & API Client Helper
+// Injects Bearer token from localStorage for all authenticated requests.
+// On 401/403 session expiration, prompts the user and returns to the role screen.
+async function apiFetch(url, options) {
+    options = options || {};
+    const headers = options.headers ? (options.headers instanceof Headers ? options.headers : { ...options.headers }) : {};
+
+    const token = localStorage.getItem("campusToken");
+    if (token) {
+        if (headers instanceof Headers) {
+            if (!headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
+        } else {
+            if (!headers["Authorization"] && !headers["authorization"]) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+        }
+    }
+    options.headers = headers;
+
+    const resp = await fetch(url, options);
+
+    if ((resp.status === 401 || resp.status === 403) && !url.includes("/api/auth/")) {
+        clearSession();
+        if (typeof applyRole === "function") applyRole();
+        if (typeof showToast === "function") showToast("Your session has expired. Please log in again.", 3500);
+    }
+
+    return resp;
+}
+
+// Global fetch wrapper to ensure all existing background sync calls include authorization
+const _nativeFetch = window.fetch;
+window.fetch = function (input, init) {
+    const url = typeof input === "string" ? input : (input && input.url ? input.url : "");
+    if (url.startsWith("/api/")) {
+        init = init || {};
+        const headers = init.headers ? (init.headers instanceof Headers ? init.headers : { ...init.headers }) : {};
+        const token = localStorage.getItem("campusToken");
+        if (token) {
+            if (headers instanceof Headers) {
+                if (!headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
+            } else {
+                if (!headers["Authorization"] && !headers["authorization"]) {
+                    headers["Authorization"] = `Bearer ${token}`;
+                }
+            }
+        }
+        init.headers = headers;
+
+        return _nativeFetch.call(window, input, init).then(function (resp) {
+            if ((resp.status === 401 || resp.status === 403) && !url.includes("/api/auth/")) {
+                if (localStorage.getItem("campusToken")) {
+                    clearSession();
+                    if (typeof applyRole === "function") applyRole();
+                    if (typeof showToast === "function") showToast("Your session has expired. Please log in again.", 3500);
+                }
+            }
+            return resp;
+        });
+    }
+    return _nativeFetch.call(window, input, init);
+};
 
 // IndexedDB Configuration for Attachments
 const DB_NAME = "campusVoiceFiles";
@@ -328,6 +388,9 @@ function saveSession(session) {
     if (session) {
         localStorage.setItem("campusRole", session.role);
         localStorage.setItem("campusUserName", session.name || "");
+        if (session.token) {
+            localStorage.setItem("campusToken", session.token);
+        }
     }
 }
 
@@ -335,6 +398,7 @@ function clearSession() {
     localStorage.removeItem("campusSession");
     localStorage.removeItem("campusRole");
     localStorage.removeItem("campusUserName");
+    localStorage.removeItem("campusToken");
 }
 
 
@@ -621,11 +685,20 @@ const studentRegPassword = document.getElementById("studentRegPassword");
 const studentRegConfirmPassword = document.getElementById("studentRegConfirmPassword");
 const studentRegError = document.getElementById("studentRegError");
 
-// Faculty Auth
+// Faculty Auth & OTP Elements
 const selectFacultyBtn = document.getElementById("selectFacultyBtn");
 const facultyPasscode = document.getElementById("facultyPasscode");
 const facultyNameInput = document.getElementById("facultyNameInput");
 const facultyError = document.getElementById("facultyError");
+const facultyEmailStep = document.getElementById("facultyEmailStep");
+const facultyOtpStep = document.getElementById("facultyOtpStep");
+const facultyEmailInput = document.getElementById("facultyEmailInput");
+const facultySendOtpBtn = document.getElementById("facultySendOtpBtn");
+const facultySentEmail = document.getElementById("facultySentEmail");
+const facultyOtpInput = document.getElementById("facultyOtpInput");
+const facultyVerifyOtpBtn = document.getElementById("facultyVerifyOtpBtn");
+const facultyResendOtpBtn = document.getElementById("facultyResendOtpBtn");
+const facultyChangeEmailBtn = document.getElementById("facultyChangeEmailBtn");
 
 // Header Navigation
 const switchRoleBtn = document.getElementById("switchRoleBtn");
@@ -1106,6 +1179,20 @@ studentRegisterForm.addEventListener("submit", async function (e) {
         email: newUser.email,
         semester: newUser.semester
     };
+
+    // Obtain signed session token from server
+    try {
+        const loginResp = await fetch("/api/auth/student/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idOrUsn: newUser.usn, password: password, passwordHash: passwordHash })
+        });
+        if (loginResp.ok) {
+            const loginData = await loginResp.json();
+            if (loginData.token) session.token = loginData.token;
+        }
+    } catch (e) {}
+
     saveSession(session);
 
     studentRegisterForm.reset();
@@ -1133,33 +1220,63 @@ studentLoginForm.addEventListener("submit", async function (e) {
         return;
     }
 
-    const users = getCampusUsers();
     const enteredHash = await hashPassword(password);
 
-    const user = users.find(function (u) {
-        const matchUsn = u.usn.toUpperCase() === identifier.toUpperCase();
-        const matchEmail = u.email.toLowerCase() === identifier.toLowerCase();
-        return (matchUsn || matchEmail) && u.passwordHash === enteredHash;
-    });
+    try {
+        const resp = await fetch("/api/auth/student/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idOrUsn: identifier, password: password, passwordHash: enteredHash })
+        });
 
-    if (!user) {
-        showLoginError("Invalid credentials. Please verify your USN/Email and password.");
-        return;
+        const data = await resp.json();
+
+        if (!resp.ok) {
+            showLoginError(data.error || "Invalid credentials. Please verify your USN/Email and password.");
+            return;
+        }
+
+        const session = {
+            role: "student",
+            usn: data.user.usn,
+            name: data.user.name,
+            branch: data.user.branch,
+            email: data.user.email,
+            semester: data.user.semester || "",
+            token: data.token
+        };
+        saveSession(session);
+
+        studentLoginForm.reset();
+        applyRole();
+        showToast(`Welcome back, ${data.user.name}!`);
+    } catch (err) {
+        // Fallback for offline mode if local data exists
+        const users = getCampusUsers();
+        const user = users.find(function (u) {
+            const matchUsn = u.usn.toUpperCase() === identifier.toUpperCase();
+            const matchEmail = u.email.toLowerCase() === identifier.toLowerCase();
+            return (matchUsn || matchEmail) && u.passwordHash === enteredHash;
+        });
+
+        if (user) {
+            const session = {
+                role: "student",
+                usn: user.usn,
+                name: user.name,
+                branch: user.branch,
+                email: user.email,
+                semester: user.semester || ""
+            };
+            saveSession(session);
+            studentLoginForm.reset();
+            applyRole();
+            showToast(`Welcome back, ${user.name}! (Offline mode)`);
+            return;
+        }
+
+        showLoginError("Unable to reach server. Please check your connection.");
     }
-
-    const session = {
-        role: "student",
-        usn: user.usn,
-        name: user.name,
-        branch: user.branch,
-        email: user.email,
-        semester: user.semester || ""
-    };
-    saveSession(session);
-
-    studentLoginForm.reset();
-    applyRole();
-    showToast(`Welcome back, ${user.name}!`);
 });
 
 function showLoginError(msg) {
@@ -1171,42 +1288,234 @@ function showLoginError(msg) {
 
 
 // ==================================================
-// 12. FACULTY AUTHENTICATION
+// 12. FACULTY AUTHENTICATION (OTP FLOW)
 // ==================================================
 
-selectFacultyBtn.addEventListener("click", function () {
-    const enteredPasscode = facultyPasscode.value.trim();
-    const enteredName = facultyNameInput.value.trim();
+let facultyPendingEmail = "";
+let facultyResendTimer = null;
+let facultyCooldownSeconds = 0;
 
-    if (enteredPasscode !== FACULTY_PASSCODE) {
-        facultyError.textContent = "Invalid passcode. (Demo passcode: faculty123)";
+function showFacultyError(msg) {
+    if (facultyError) {
+        facultyError.textContent = msg;
         facultyError.classList.remove("hidden");
-        facultyPasscode.focus();
+    }
+}
+
+function hideFacultyError() {
+    if (facultyError) {
+        facultyError.textContent = "";
+        facultyError.classList.add("hidden");
+    }
+}
+
+function startFacultyCooldown(seconds) {
+    facultyCooldownSeconds = seconds;
+    if (facultyResendTimer) clearInterval(facultyResendTimer);
+    if (!facultyResendOtpBtn) return;
+
+    facultyResendOtpBtn.disabled = true;
+    facultyResendOtpBtn.textContent = `Resend in ${facultyCooldownSeconds}s`;
+
+    facultyResendTimer = setInterval(function () {
+        facultyCooldownSeconds--;
+        if (facultyCooldownSeconds <= 0) {
+            clearInterval(facultyResendTimer);
+            facultyResendTimer = null;
+            facultyResendOtpBtn.disabled = false;
+            facultyResendOtpBtn.textContent = "Resend Code";
+        } else {
+            facultyResendOtpBtn.textContent = `Resend in ${facultyCooldownSeconds}s`;
+        }
+    }, 1000);
+}
+
+function resetFacultyLoginForm() {
+    facultyPendingEmail = "";
+    if (facultyResendTimer) {
+        clearInterval(facultyResendTimer);
+        facultyResendTimer = null;
+    }
+    facultyCooldownSeconds = 0;
+
+    if (facultyEmailInput) facultyEmailInput.value = "";
+    if (facultyOtpInput) facultyOtpInput.value = "";
+    if (facultyPasscode) facultyPasscode.value = "";
+    if (facultyNameInput) facultyNameInput.value = "";
+
+    hideFacultyError();
+
+    if (facultyEmailStep) facultyEmailStep.classList.remove("hidden");
+    if (facultyOtpStep) facultyOtpStep.classList.add("hidden");
+    if (facultyResendOtpBtn) {
+        facultyResendOtpBtn.disabled = false;
+        facultyResendOtpBtn.textContent = "Resend Code";
+    }
+}
+
+// Request OTP Handler
+async function handleFacultySendOtp() {
+    const email = (facultyEmailInput ? facultyEmailInput.value : "").trim();
+    if (!email) {
+        showFacultyError("Please enter your institutional email.");
+        if (facultyEmailInput) facultyEmailInput.focus();
         return;
     }
 
-    facultyError.classList.add("hidden");
-    const resolvedName = enteredName || "Faculty Member";
-
-    const session = {
-        role: "faculty",
-        name: resolvedName,
-        department: "Faculty / Administration"
-    };
-    saveSession(session);
-
-    facultyPasscode.value = "";
-    facultyNameInput.value = "";
-
-    applyRole();
-    showToast(`Welcome, ${resolvedName}! Faculty privileges enabled.`);
-});
-
-facultyPasscode.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-        selectFacultyBtn.click();
+    if (facultySendOtpBtn) {
+        facultySendOtpBtn.disabled = true;
+        facultySendOtpBtn.textContent = "Sending Verification Code...";
     }
-});
+    hideFacultyError();
+
+    try {
+        const resp = await fetch("/api/auth/faculty/request-otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: email })
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+            showFacultyError(data.error || "Failed to send verification code.");
+            if (facultySendOtpBtn) {
+                facultySendOtpBtn.disabled = false;
+                facultySendOtpBtn.textContent = "Send Verification Code →";
+            }
+            return;
+        }
+
+        facultyPendingEmail = email.toLowerCase();
+        if (facultySentEmail) facultySentEmail.textContent = facultyPendingEmail;
+
+        if (facultyEmailStep) facultyEmailStep.classList.add("hidden");
+        if (facultyOtpStep) facultyOtpStep.classList.remove("hidden");
+        if (facultyOtpInput) {
+            facultyOtpInput.value = "";
+            facultyOtpInput.focus();
+        }
+
+        startFacultyCooldown(60);
+        showToast("Verification code generated. Please check your inbox or server terminal.", 4000);
+    } catch (err) {
+        showFacultyError("Network error. Please ensure server is running.");
+    } finally {
+        if (facultySendOtpBtn) {
+            facultySendOtpBtn.disabled = false;
+            facultySendOtpBtn.textContent = "Send Verification Code →";
+        }
+    }
+}
+
+// Verify OTP Handler
+async function handleFacultyVerifyOtp() {
+    const code = (facultyOtpInput ? facultyOtpInput.value : "").trim();
+    if (!code || code.length !== 6) {
+        showFacultyError("Please enter the 6-digit verification code.");
+        if (facultyOtpInput) facultyOtpInput.focus();
+        return;
+    }
+
+    if (facultyVerifyOtpBtn) {
+        facultyVerifyOtpBtn.disabled = true;
+        facultyVerifyOtpBtn.textContent = "Verifying...";
+    }
+    hideFacultyError();
+
+    try {
+        const resp = await fetch("/api/auth/faculty/verify-otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: facultyPendingEmail, code: code })
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+            showFacultyError(data.error || "Invalid verification code.");
+            if (facultyVerifyOtpBtn) {
+                facultyVerifyOtpBtn.disabled = false;
+                facultyVerifyOtpBtn.textContent = "Verify & Sign In →";
+            }
+            return;
+        }
+
+        const session = {
+            role: "faculty",
+            userId: data.user.email,
+            email: data.user.email,
+            name: data.user.name,
+            department: data.user.department,
+            token: data.token
+        };
+        saveSession(session);
+
+        resetFacultyLoginForm();
+        applyRole();
+        showToast(`Welcome, ${data.user.name}! Faculty session active.`);
+    } catch (err) {
+        showFacultyError("Network error during verification. Please try again.");
+    } finally {
+        if (facultyVerifyOtpBtn) {
+            facultyVerifyOtpBtn.disabled = false;
+            facultyVerifyOtpBtn.textContent = "Verify & Sign In →";
+        }
+    }
+}
+
+// Attach Faculty OTP Listeners
+if (facultySendOtpBtn) {
+    facultySendOtpBtn.addEventListener("click", handleFacultySendOtp);
+}
+
+if (facultyEmailInput) {
+    facultyEmailInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            handleFacultySendOtp();
+        }
+    });
+}
+
+if (facultyVerifyOtpBtn) {
+    facultyVerifyOtpBtn.addEventListener("click", handleFacultyVerifyOtp);
+}
+
+if (selectFacultyBtn) {
+    selectFacultyBtn.addEventListener("click", function () {
+        if (facultyOtpStep && !facultyOtpStep.classList.contains("hidden")) {
+            handleFacultyVerifyOtp();
+        } else {
+            handleFacultySendOtp();
+        }
+    });
+}
+
+if (facultyOtpInput) {
+    facultyOtpInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            handleFacultyVerifyOtp();
+        }
+    });
+}
+
+if (facultyResendOtpBtn) {
+    facultyResendOtpBtn.addEventListener("click", function () {
+        if (facultyCooldownSeconds <= 0 && facultyPendingEmail) {
+            if (facultyEmailInput) facultyEmailInput.value = facultyPendingEmail;
+            handleFacultySendOtp();
+        }
+    });
+}
+
+if (facultyChangeEmailBtn) {
+    facultyChangeEmailBtn.addEventListener("click", function () {
+        resetFacultyLoginForm();
+        if (facultyEmailInput) facultyEmailInput.focus();
+    });
+}
 
 
 // ==================================================
@@ -1214,16 +1523,21 @@ facultyPasscode.addEventListener("keydown", function (e) {
 // ==================================================
 
 switchRoleBtn.addEventListener("click", function () {
+    const token = localStorage.getItem("campusToken");
+    if (token) {
+        fetch("/api/auth/logout", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` }
+        }).catch(function () {});
+    }
+
     clearSession();
+    resetFacultyLoginForm();
     editingNoticeId = null;
 
     closeModal();
     closeFileViewer();
     closeProfileModal();
-
-    if (facultyError) facultyError.classList.add("hidden");
-    if (facultyPasscode) facultyPasscode.value = "";
-    if (facultyNameInput) facultyNameInput.value = "";
 
     applyRole();
     showToast("Session ended. Please select your role.");
@@ -4986,6 +5300,51 @@ syncNoticesFromServer();
 syncUsersFromServer();
 syncCategoriesFromServer();
 syncCommunityFromServer();
+
+// Server session verification on startup
+async function verifyServerSession() {
+    const token = localStorage.getItem("campusToken");
+    if (!token) {
+        if (getSession()) {
+            clearSession();
+            applyRole();
+        }
+        return;
+    }
+
+    try {
+        const resp = await fetch("/api/auth/me", {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data && data.user) {
+                const current = getSession() || {};
+                const verifiedSession = {
+                    ...current,
+                    ...data.user,
+                    role: data.user.role,
+                    name: data.user.name,
+                    department: data.user.department || current.department,
+                    branch: data.user.branch || current.branch,
+                    semester: data.user.semester || current.semester,
+                    token: token
+                };
+                saveSession(verifiedSession);
+                applyRole();
+            }
+        } else if (resp.status === 401 || resp.status === 403) {
+            clearSession();
+            applyRole();
+            showToast("Your session has expired. Please log in again.");
+        }
+    } catch (e) {
+        // Server unreachable or network offline, retain local credentials
+    }
+}
+
+verifyServerSession();
 
 // Periodic live sync every 3 seconds (syncs Edge & Chrome in real-time)
 setInterval(function () {

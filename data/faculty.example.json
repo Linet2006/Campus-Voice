@@ -1,0 +1,14 @@
+[
+  {
+    "email": "ramesh.cse@gec.edu",
+    "name": "Dr. Ramesh (CSE Dept)",
+    "department": "Computer Science & Engineering",
+    "active": true
+  },
+  {
+    "email": "faculty@gec.edu",
+    "name": "Prof. S. Sharma",
+    "department": "Electronics & Communication",
+    "active": true
+  }
+]

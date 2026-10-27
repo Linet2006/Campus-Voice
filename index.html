@@ -398,53 +398,103 @@
                             Faculty members can publish official announcements targeting all students or specific engineering branches, manage uploaded attachments, and view analytics.
                         </p>
 
-                        <!-- Faculty Credentials -->
+                        <!-- Faculty Credentials & OTP Flow -->
                         <div class="space-y-3 pt-3 border-t border-slate-200 text-left">
-                            <div>
-                                <label for="facultyPasscode" class="block text-[11px] font-semibold text-slate-600 mb-1">
-                                    Faculty Passcode <span class="text-slate-400 font-normal">(demo: faculty123)</span>
-                                </label>
-                                <div class="relative">
+                            <!-- Hidden legacy inputs for 100% backward compatibility -->
+                            <input id="facultyPasscode" type="hidden" value="">
+                            <input id="facultyNameInput" type="hidden" value="">
+
+                            <!-- STEP 1: Email Input Form -->
+                            <div id="facultyEmailStep" class="space-y-3">
+                                <div>
+                                    <label for="facultyEmailInput" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                        Faculty College Email <span class="text-amber-600 font-normal">(Allowlisted)</span>
+                                    </label>
                                     <input
-                                        id="facultyPasscode"
-                                        type="password"
-                                        placeholder="Enter demo passcode"
-                                        class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 pr-9 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 transition"
+                                        id="facultyEmailInput"
+                                        type="email"
+                                        placeholder="e.g. ramesh.cse@gec.edu"
+                                        autocomplete="email"
+                                        class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 transition"
                                     >
+                                    <p class="text-[10px] text-slate-400 mt-1">
+                                        Demo allowed: <span class="font-mono text-slate-600">ramesh.cse@gec.edu</span> or <span class="font-mono text-slate-600">faculty@gec.edu</span>
+                                    </p>
+                                </div>
+
+                                <button
+                                    id="facultySendOtpBtn"
+                                    type="button"
+                                    class="w-full bg-accent hover:bg-amber-400 text-brand-900 font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition shadow-sm hover:shadow mt-2"
+                                >
+                                    Send Verification Code →
+                                </button>
+                            </div>
+
+                            <!-- STEP 2: 6-Digit OTP Verification Form -->
+                            <div id="facultyOtpStep" class="space-y-3 hidden">
+                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs text-amber-900">
+                                    <div class="flex items-center gap-1.5 font-semibold text-[11px]">
+                                        <span>📨</span> Code sent to:
+                                    </div>
+                                    <div id="facultySentEmail" class="font-mono text-amber-950 font-bold break-all mt-0.5"></div>
+                                    <div class="text-[10px] text-amber-700 mt-1">
+                                        Check terminal / console log in dev mode, or inbox if live SMTP is active.
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="facultyOtpInput" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                        Enter 6-Digit One-Time Code
+                                    </label>
+                                    <input
+                                        id="facultyOtpInput"
+                                        type="text"
+                                        inputmode="numeric"
+                                        pattern="[0-9]{6}"
+                                        maxlength="6"
+                                        placeholder="• • • • • •"
+                                        class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-center text-base tracking-[0.3em] font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 transition"
+                                    >
+                                </div>
+
+                                <button
+                                    id="facultyVerifyOtpBtn"
+                                    type="button"
+                                    class="w-full bg-accent hover:bg-amber-400 text-brand-900 font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition shadow-sm hover:shadow"
+                                >
+                                    Verify &amp; Sign In →
+                                </button>
+
+                                <div class="flex items-center justify-between text-[11px] pt-1">
                                     <button
                                         type="button"
-                                        class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 text-xs"
-                                        data-target="facultyPasscode"
-                                        title="Show / hide password"
+                                        id="facultyResendOtpBtn"
+                                        class="text-amber-700 font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        👁
+                                        Resend Code
+                                    </button>
+                                    <button
+                                        type="button"
+                                        id="facultyChangeEmailBtn"
+                                        class="text-slate-500 hover:text-slate-800 underline"
+                                    >
+                                        Use different email
                                     </button>
                                 </div>
                             </div>
 
-                            <div>
-                                <label for="facultyNameInput" class="block text-[11px] font-semibold text-slate-600 mb-1">
-                                    Faculty Name &amp; Department
-                                </label>
-                                <input
-                                    id="facultyNameInput"
-                                    type="text"
-                                    placeholder="e.g. Dr. Ramesh (CSE Dept)"
-                                    class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 transition"
-                                >
-                            </div>
-
-                            <p id="facultyError" class="text-rose-600 text-xs hidden font-medium"></p>
+                            <!-- Error Message Display -->
+                            <p id="facultyError" class="text-rose-600 text-xs hidden font-medium pt-1"></p>
                         </div>
                     </div>
 
+                    <!-- Legacy button alias (hidden when step 1/2 are active) -->
                     <button
                         id="selectFacultyBtn"
                         type="button"
-                        class="w-full bg-accent hover:bg-amber-400 text-brand-900 font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition shadow-sm hover:shadow mt-5"
-                    >
-                        Enter as Faculty →
-                    </button>
+                        class="hidden"
+                    ></button>
                 </div>
 
             </div>

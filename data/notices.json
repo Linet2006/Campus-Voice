@@ -1,5 +1,23 @@
 [
   {
+    "id": 1793062378949,
+    "title": "Midterm Exam Schedule Announced",
+    "category": "Exams",
+    "description": "",
+    "author": "Dr. Ramesh (CSE Dept)",
+    "postedBy": "Dr. Ramesh (CSE Dept)",
+    "authorRole": "faculty",
+    "department": "Computer Science & Engineering",
+    "date": "Oct 27, 2026",
+    "upvotes": 0,
+    "upvotedBy": [],
+    "attachment": null,
+    "audience": {
+      "type": "all",
+      "branches": []
+    }
+  },
+  {
     "id": 1793025805573,
     "title": "exam",
     "category": "Exams",
